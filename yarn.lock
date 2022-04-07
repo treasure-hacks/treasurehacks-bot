@@ -529,6 +529,13 @@
   "resolved" "https://registry.npmjs.org/delayed-stream/-/delayed-stream-1.0.0.tgz"
   "version" "1.0.0"
 
+"deta@^1.1.0":
+  "integrity" "sha512-mQAvfAsB++McPMT3Gb39KWkxfFzaPSF+z8XNpomakkUslg9xTu6Z8gVjAXaDGJm0LFEIIZQdokpU+lOJOXtOqw=="
+  "resolved" "https://registry.npmjs.org/deta/-/deta-1.1.0.tgz"
+  "version" "1.1.0"
+  dependencies:
+    "node-fetch" "^2.6.7"
+
 "discord-api-types@^0.18.1":
   "integrity" "sha512-hNC38R9ZF4uaujaZQtQfm5CdQO58uhdkoHQAVvMfIL0LgOSZeW575W8H6upngQOuoxWd8tiRII3LLJm9zuQKYg=="
   "resolved" "https://registry.npmjs.org/discord-api-types/-/discord-api-types-0.18.1.tgz"
@@ -1454,7 +1461,7 @@
   "resolved" "https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz"
   "version" "1.4.0"
 
-"node-fetch@^2.6.1":
+"node-fetch@^2.6.1", "node-fetch@^2.6.7":
   "integrity" "sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ=="
   "resolved" "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.7.tgz"
   "version" "2.6.7"

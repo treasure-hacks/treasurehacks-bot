@@ -11,6 +11,7 @@
   "dependencies": {
     "@discordjs/builders": "^0.8.1",
     "@discordjs/rest": "^0.1.0-canary.0",
+    "deta": "^1.1.0",
     "discord-api-types": "^0.24.0",
     "discord.js": "^13.3.0",
     "dotenv": "^16.0.0"

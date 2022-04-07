@@ -1,9 +1,13 @@
 require('dotenv').config()
 
+const { Deta } = require('deta')
+const deta = Deta(process.env.DETA_PROJECT_KEY)
+const serverSettingsDB = deta.Base('server-settings')
+
 const { REST } = require('@discordjs/rest')
 const { Routes } = require('discord-api-types/v9')
 const fs = require('fs')
-const { Client, Intents, Collection } = require('discord.js')
+const { Client, Intents, Collection, MessageEmbed } = require('discord.js')
 const client = new Client({
   intents: [
     Intents.FLAGS.GUILDS,
@@ -58,14 +62,21 @@ async function respondToCommand (interaction) {
 }
 
 // Track Invites
-const invites = new Collection()
+const invites = global.invites = new Collection()
 
 async function loadInvites () {
   // Cache invites
   client.guilds.cache.forEach(async guild => {
     // Fetch all Guild Invites
     const firstInvites = await guild.invites.fetch()
-    invites.set(guild.id, new Collection(firstInvites.map((invite) => [invite.code, invite.uses])))
+    const inviteArray = firstInvites.map((invite) => [invite.code, invite.uses])
+    invites.set(guild.id, new Collection(inviteArray))
+  })
+}
+function updateGuildInvites (guild) {
+  guild.invites.fetch().then(guildInvites => {
+    // This is the same as the ready event
+    invites.set(guild.id, new Map(guildInvites.map((invite) => [invite.code, invite.uses])))
   })
 }
 function trackInvites (client) {
@@ -79,10 +90,7 @@ function trackInvites (client) {
   })
   client.on('guildCreate', (guild) => {
     // We've been added to a new Guild. Let's fetch all the invites, and save it to our cache
-    guild.invites.fetch().then(guildInvites => {
-      // This is the same as the ready event
-      invites.set(guild.id, new Map(guildInvites.map((invite) => [invite.code, invite.uses])))
-    })
+    updateGuildInvites(guild)
   })
   client.on('guildDelete', (guild) => {
     // We've been removed from a Guild. Let's delete all their invites
@@ -91,7 +99,32 @@ function trackInvites (client) {
 }
 trackInvites(client)
 
-client.once('ready', () => {
+function sendMessage (channel, data) {
+  channel.send(data)
+    .then(message => console.log(`Sent message: ${message.content}`))
+    .catch(console.error)
+}
+function sendEmbeds (channel, embedConfigs) {
+  const embeds = embedConfigs.map(config => {
+    const embed = new MessageEmbed()
+      .setColor(config.color)
+      .setTitle(config.title)
+      .setAuthor(config.author.name, config.author.iconURL, config.author.string)
+      .setDescription(config.description)
+    if (config.url) embed.setURL('https://discord.js.org/')
+    if (config.thumbnail) embed.setThumbnail('https://i.imgur.com/AfFp7pu.png')
+    if (config.image) embed.setImage('https://i.imgur.com/AfFp7pu.png')
+    if (config.timestamp) embed.setTimestamp(...config.fields)
+    if (config.footer) embed.setFooter(...config.fields)
+    if (config.fields) embed.addFields(...config.fields)
+
+    return embed
+  })
+
+  channel.send({ embeds })
+}
+
+client.once('ready', async () => {
   registerSlashCommands()
   loadInvites()
 })
@@ -101,12 +134,48 @@ client.on('interactionCreate', async interaction => {
   respondToCommand(interaction)
 })
 client.on('guildMemberAdd', async member => {
+  const serverConfig = await serverSettingsDB.get(member.guild.id)
+
   const newInvites = await member.guild.invites.fetch()
   // This is the *existing* invites for the guild.
   const oldInvites = invites.get(member.guild.id)
   // Look through the invites, find the one for which the uses went up.
   const invite = newInvites.find(i => i.uses > oldInvites.get(i.code))
-  console.log(invite)
+  updateGuildInvites(member.guild)
+
+  const channels = await member.guild.channels.fetch()
+  const logChannel = channels.get(serverConfig.logChannel)
+
+  const embeds = [{
+    color: parseInt('5a686c', 16),
+    author: { name: 'Member Joined', iconURL: member.displayAvatarURL() },
+    title: '',
+    description: `<@!${member.id}> has been invited to the server!`,
+    fields: [
+      { name: 'Username', value: `${member.user.username}#${member.user.discriminator}`, inline: true },
+      { name: 'Inviter', value: `${invite.inviter.username}#${invite.inviter.discriminator}`, inline: true },
+      { name: 'Channel', value: `${invite.channel.name}`, inline: true }
+    ],
+    timestamp: Date.now()
+  }]
+  // sendMessage(logChannel, `${member.displayName} joined the server from an invite created by ${invite.inviter.username} (Code: ${invite.code})`)
+
+  const actions = serverConfig.inviteRoles.filter(action => action.inviteChannelIds.includes(invite.channel.id))
+  actions.forEach(action => {
+    action.rolesToAdd.forEach(role => {
+      const serverRole = member.guild.roles.cache.find(r => r.name === role)
+      member.roles.add(serverRole)
+        .catch(() => { sendMessage(logChannel, `Failed to add role ${role} to ${member.displayName}`) })
+      embeds.push({
+        color: serverRole.color,
+        author: { name: `${member.user.username}#${member.user.discriminator}`, iconURL: member.displayAvatarURL() },
+        title: '',
+        description: `@${member.displayName} was given the <@&${serverRole.id}> role through this invite`
+      })
+    })
+  })
+  console.log(embeds)
+  if (actions.length > 0) sendEmbeds(logChannel, embeds)
 })
 
 client.login(token)
