@@ -1,10 +1,10 @@
 const { SlashCommandBuilder } = require('@discordjs/builders')
 const { Deta } = require('deta')
-const { ChannelType } = require('discord-api-types/v9')
+// const { ChannelType } = require('discord-api-types/v9')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 
-function getChannelsAndRules (interaction) {
+function getChannelsAndRoles (interaction) {
   const channels = interaction.options.getString('channels')?.split(' ') || []
   const roles = interaction.options.getString('roles')?.split(' ') || []
 
@@ -29,6 +29,7 @@ function getChannelsAndRules (interaction) {
     }),
     warnings: warnings.length ? ['Could not find the following channels or roles: ' + warnings.join(', ')] : []
   }
+  console.trace(serverData)
 
   return serverData
 }
@@ -60,8 +61,24 @@ async function addInviteRule (interaction, client, isUpdate) {
     return
   }
   if (color) color = parseInt(color.replace(/^#/, ''), 16)
-  const channels = [interaction.options.getChannel('channel'), interaction.options.getChannel('channel2'), interaction.options.getChannel('channel3')].filter(x => !!x)
-  const roles = [interaction.options.getRole('role'), interaction.options.getRole('role2'), interaction.options.getRole('role3')].filter(x => !!x)
+  // const channels = [interaction.options.getChannel('channel'), interaction.options.getChannel('channel2'), interaction.options.getChannel('channel3')].filter(x => !!x)
+  // const roles = [interaction.options.getRole('role'), interaction.options.getRole('role2'), interaction.options.getRole('role3')].filter(x => !!x)
+
+  const { error, channels, roles, warnings } = getChannelsAndRoles(interaction)
+  console.trace(channels)
+  const noFieldsInNew = (!channels.size || !roles.size) && !isUpdate
+  if (error || noFieldsInNew) {
+    interaction.reply({
+      embeds: [{
+        color: 0xff0000,
+        title: 'Invalid Arguments',
+        description: error || 'There must be at least one valid channel and one valid role'
+      }],
+      ephemeral: true
+    })
+    return
+  }
+
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
   const hasInvalidRoles = roles.some(role => {
     const roleJSON = role.toJSON()
@@ -77,6 +94,7 @@ async function addInviteRule (interaction, client, isUpdate) {
       ephemeral: true
     })
   }
+  console.trace('check existing Rule')
   const existingRule = serverConfig.inviteRoles.find(rule => rule.name === name)
   if ((existingRule && !isUpdate) || (!existingRule && isUpdate)) {
     // Force separation of commands because we don't want accidental changes being made
@@ -89,7 +107,18 @@ async function addInviteRule (interaction, client, isUpdate) {
       ephemeral: true
     })
   }
-  let replyContent = ''
+  const replyContent = {
+    embeds: [],
+    ephemeral: true
+  }
+  if (warnings.length) {
+    replyContent.embeds.push({
+      color: 0xf0b800,
+      title: 'Warnings',
+      description: warnings.join('\n')
+    })
+  }
+
   if (existingRule) {
     if (description) existingRule.description = description
     if (color) existingRule.color = color
@@ -97,15 +126,13 @@ async function addInviteRule (interaction, client, isUpdate) {
     existingRule.rolesToAdd.push(...roles.map(r => r.id))
     existingRule.inviteChannelIds = [...new Set(existingRule.inviteChannelIds)]
     existingRule.rolesToAdd = [...new Set(existingRule.rolesToAdd)]
-    replyContent = {
-      embeds: [{
-        title: `Updated \`${name}\``,
-        color: existingRule.color,
-        description: (existingRule.description ? existingRule.description + '\n\n' : '') +
-          `Applies to invites in: ${existingRule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
-          `\nPeople invited will have these roles: ${existingRule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`
-      }]
-    }
+    replyContent.embeds.push({
+      title: `Updated \`${name}\``,
+      color: existingRule.color,
+      description: (existingRule.description ? existingRule.description + '\n\n' : '') +
+        `Applies to invites in: ${existingRule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
+        `\nPeople invited will have these roles: ${existingRule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`
+    })
   } else {
     serverConfig.inviteRoles.push({
       name,
@@ -114,18 +141,47 @@ async function addInviteRule (interaction, client, isUpdate) {
       inviteChannelIds: [...new Set(channels)].map(c => c.id),
       rolesToAdd: [...new Set(roles)].map(r => r.id)
     })
-    replyContent = {
-      embeds: [{
-        title: `Created \`${name}\``,
-        color,
-        description: (description ? description + '\n\n' : '') +
-          `Applies to invites in: ${channels.join(', ')}` +
-          `\nPeople invited will have these roles: ${roles.join(', ')}`
-      }]
-    }
+    replyContent.embeds.push({
+      title: `Created \`${name}\``,
+      color,
+      description: (description ? description + '\n\n' : '') +
+        `Applies to invites in: ${channels.join(', ')}` +
+        `\nPeople invited will have these roles: ${roles.join(', ')}`
+    })
   }
+
   serverSettingsDB.put(serverConfig)
   interaction.reply(replyContent)
+}
+async function listInviteRoles (interaction, client, listAll) {
+  const serverConfig = await serverSettingsDB.get(interaction.guild.id)
+  const embeds = serverConfig.inviteRoles.filter(rule => {
+    return rule.name === interaction.options.getString('name') || listAll
+  }).map(rule => {
+    return {
+      title: `Invite Role Assignment: ${rule.name}`,
+      color: rule.color,
+      description: (rule.description ? rule.description + '\n\n' : '') +
+        `Applies to invites in: ${rule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
+        `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`
+    }
+  })
+
+  if (!embeds.length) {
+    embeds.push({
+      title: listAll
+        ? 'Command Failed: No Invite Role Assignments'
+        : 'Command Failed: No Matching Rule',
+      description: listAll
+        ? 'Your server does not have any invite role assignment rules associated with it.\nTry adding one with the `/inviteroles add` command!'
+        : 'There was no invite role assignment rule with the name that was provided'
+    })
+  }
+
+  return interaction.reply({
+    embeds,
+    ephemeral: true
+  })
 }
 async function listTargetedInvites (interaction, client) {
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
@@ -148,20 +204,15 @@ async function listTargetedInvites (interaction, client) {
     Object.assign(invite, { associatedRoles })
   })
 
-  const embeds = [/* {
-    color: parseInt('5a686c', 16),
-    // author: { name: 'Active Role Assignment' },
-    title: 'Active Role Assignment',
-    description: ''
-  } , */ ...invitesWithAssignment.map(invite => {
-      const color = invite.associatedRoles.length > 1 ? parseInt('5a686c', 16) : interaction.guild.roles.cache.get(invite.associatedRoles[0]).color
-      return {
-        color,
-        title: '',
-        author: { name: `${invite.inviter.username} (via ${invite.code})`, iconURL: invite.inviter.displayAvatarURL() },
-        description: `Invite Channel: <#${invite.channel}>, Uses: ${invite.uses}\nRoles Assigned: ${invite.associatedRoles.map(roleId => `<@&${roleId}>`).join(', ')}`
-      }
-    })]
+  const embeds = invitesWithAssignment.map(invite => {
+    const color = invite.associatedRoles.length > 1 ? parseInt('5a686c', 16) : interaction.guild.roles.cache.get(invite.associatedRoles[0]).color
+    return {
+      color,
+      title: '',
+      author: { name: `${invite.inviter.username} (via ${invite.code})`, iconURL: invite.inviter.displayAvatarURL() },
+      description: `Invite Channel: <#${invite.channel}>, Uses: ${invite.uses}\nRoles Assigned: ${invite.associatedRoles.map(roleId => `<@&${roleId}>`).join(', ')}`
+    }
+  })
 
   return interaction.reply({
     embeds,
@@ -172,8 +223,7 @@ async function removeInviteRule (interaction, client) {
   const name = interaction.options.getString('name')
   const [removeDescription, removeColor] = [interaction.options.getBoolean('description'), interaction.options.getBoolean('color')]
 
-  const { error, channels, roles, warnings } = getChannelsAndRules(interaction)
-  // warning color: #f0b800
+  const { error, channels, roles, warnings } = getChannelsAndRoles(interaction)
   if (error) {
     interaction.reply({
       embeds: [{
@@ -254,39 +304,11 @@ async function removeInviteRule (interaction, client) {
 
 function addUpdateCommandOptions (subcommand, requireInitial) {
   return subcommand
-    .addStringOption(option => option.setName('name')
-      .setDescription('A name for this invite rule')
-      .setRequired(true)
-    )
-    .addChannelOption(option => option.setName('channel')
-      .setDescription('The channel for select invites')
-      .addChannelTypes([ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildVoice])
-      .setRequired(requireInitial)
-    )
-    .addRoleOption(option => option.setName('role')
-      .setDescription('The role you would like to give everyone invited to this channel')
-      .setRequired(requireInitial)
-    )
-    .addStringOption(option => option.setName('description')
-      .setDescription('An optional description that describes this invite role assignment rule')
-    )
-    .addStringOption(option => option.setName('color')
-      .setDescription('An optional HEX string to assign a color to this role')
-    )
-    .addChannelOption(option => option.setName('channel2')
-      .setDescription('Another channel for select invites')
-      .addChannelTypes([ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildVoice])
-    )
-    .addChannelOption(option => option.setName('channel3')
-      .setDescription('Yet another channel for select invites')
-      .addChannelTypes([ChannelType.GuildText, ChannelType.GuildNews, ChannelType.GuildVoice])
-    )
-    .addRoleOption(option => option.setName('role2')
-      .setDescription('Another role you would like to give everyone invited to this channel')
-    )
-    .addRoleOption(option => option.setName('role3')
-      .setDescription('Yet another role you would like to give everyone invited to this channel')
-    )
+    .addStringOption(option => option.setName('name').setDescription('The name of your new invite role assignment rule').setRequired(true))
+    .addStringOption(option => option.setName('channels').setDescription('The channel for select invites (with the #), separated by spaces').setRequired(requireInitial))
+    .addStringOption(option => option.setName('roles').setDescription('Roles (with the @), separated by spaces, to grant to people who are invited to this channel').setRequired(requireInitial))
+    .addStringOption(option => option.setName('description').setDescription('A description that describes this invite role assignment rule'))
+    .addStringOption(option => option.setName('color').setDescription('A HEX string to assign a color to this role'))
 }
 
 module.exports = {
@@ -302,7 +324,7 @@ module.exports = {
       return subcommand
         .setName('details')
         .setDescription('Get details about one role assignment rule')
-        .addStringOption(option => option.setName('name').setDescription('The name of the assignment rule'))
+        .addStringOption(option => option.setName('name').setDescription('The name of the assignment rule').setRequired(true))
     })
     .addSubcommand(subcommand => {
       return subcommand
@@ -333,8 +355,8 @@ module.exports = {
   userPermissions: ['ADMINISTRATOR'],
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
-      case 'list': return //listTargetedInvites(interaction, client)
-      case 'details': return //listTargetedInvites(interaction, client)
+      case 'list': return listInviteRoles(interaction, client, true)
+      case 'details': return listInviteRoles(interaction, client, false)
       case 'invites': return listTargetedInvites(interaction, client)
       case 'add': return addInviteRule(interaction, client, false)
       case 'update': return addInviteRule(interaction, client, true)

@@ -57,7 +57,6 @@ function registerSlashCommands () {
 
         const fullPermissions = commandsResponse.reduce((previous, current) => {
           const roles = getRoles(current.name)
-          // console.log(current.name, roles)
           if (!roles) return previous
           const permissions = roles.map((p, id) => {
             return {
@@ -72,7 +71,6 @@ function registerSlashCommands () {
           })
           return previous
         }, [])
-        console.log(fullPermissions)
         guild.commands.permissions.set({ fullPermissions })
       })
 
@@ -186,10 +184,9 @@ client.on('guildMemberAdd', async member => {
         `<@!${member.id}> was given the following roles: ${action.rolesToAdd.map(id => `<@&${id}>`).join(', ')}`
     })
   })
-  console.log(embeds)
   if (actions.length > 0) sendEmbeds(logChannel, embeds)
 })
 
 client.login(token)
 
-// TO DO: Handle role deletion, one param for channels and roles
+// TO DO: usage counter for each invite rule, one param for channels and roles, alias commands
