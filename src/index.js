@@ -189,4 +189,4 @@ client.on('guildMemberAdd', async member => {
 
 client.login(token)
 
-// TO DO: usage counter for each invite rule, one param for channels and roles, alias commands
+// TO DO: usage counter for each invite rule
