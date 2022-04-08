@@ -46,7 +46,7 @@ function registerSlashCommands () {
     try {
       console.log('Refreshing application (/) commands...')
       const commandsResponse = await rest.put(Routes.applicationCommands(client.user.id), {
-        body: commandArray
+        body: commandArray.sort((a, b) => (commandPermssions[a.name]?.length || 0) - (commandPermssions[b.name]?.length || 0))
       })
 
       client.guilds.cache.forEach(guild => {

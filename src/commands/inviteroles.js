@@ -329,9 +329,9 @@ module.exports = {
     .setName('inviteroles')
     .setDescription('Manage roles that are automatically added with invites to certain channels')
     .addSubcommand(subcommand => {
+      subcommand.setName('add').setDescription('Add a new role given to people invited to a certain channel')
+      addUpdateCommandOptions(subcommand, true)
       return subcommand
-        .setName('list')
-        .setDescription('Get a list of role assignments that occur when someone joins the server')
     })
     .addSubcommand(subcommand => {
       return subcommand
@@ -345,19 +345,9 @@ module.exports = {
         .setDescription('Get a list of active invites that will add roles to people who use them')
     })
     .addSubcommand(subcommand => {
-      subcommand.setName('add').setDescription('Add a new role given to people invited to a certain channel')
-      addUpdateCommandOptions(subcommand, true)
       return subcommand
-    })
-    .addSubcommand(subcommand => {
-      subcommand.setName('update').setDescription('Add fields to an invite role assignment rule')
-      addUpdateCommandOptions(subcommand, false)
-      return subcommand
-    })
-    .addSubcommand(subcommand => {
-      subcommand.setName('set').setDescription('Override fields in an invite role assignment rule')
-      addUpdateCommandOptions(subcommand, false)
-      return subcommand
+        .setName('list')
+        .setDescription('Get a list of role assignments that occur when someone joins the server')
     })
     .addSubcommand(subcommand => {
       subcommand
@@ -368,6 +358,16 @@ module.exports = {
         .addStringOption(option => option.setName('roles').setDescription('Roles (with the @), separated by spaces, to remove from the specified rule'))
         .addBooleanOption(option => option.setName('description').setDescription('Whether to remove the description from the specifed rule'))
         .addBooleanOption(option => option.setName('color').setDescription('Whether to remove the color from the specified rule'))
+      return subcommand
+    })
+    .addSubcommand(subcommand => {
+      subcommand.setName('set').setDescription('Override fields in an invite role assignment rule')
+      addUpdateCommandOptions(subcommand, false)
+      return subcommand
+    })
+    .addSubcommand(subcommand => {
+      subcommand.setName('update').setDescription('Add fields to an invite role assignment rule')
+      addUpdateCommandOptions(subcommand, false)
       return subcommand
     }),
   userPermissions: ['ADMINISTRATOR'],
