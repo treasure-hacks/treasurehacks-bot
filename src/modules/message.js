@@ -1,11 +1,13 @@
 const { MessageEmbed } = require('discord.js')
 
 function sendMessage (channel, data) {
+  if (!channel) return
   channel.send(data)
     .then(message => console.log(`Sent message: ${message.content}`))
     .catch(console.error)
 }
 function sendEmbeds (channel, embedConfigs) {
+  if (!channel) return
   const embeds = embedConfigs.map(config => {
     const embed = new MessageEmbed()
       .setColor(config.color)

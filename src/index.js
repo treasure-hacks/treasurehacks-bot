@@ -81,7 +81,7 @@ function registerSlashCommands () {
       console.error(error)
     }
   })()
-  console.log(`Logged in as ${client.user.tag}!`)
+  console.log(`Logged in as \x1b[34m${client.user.tag}\x1b[0m`)
 }
 async function respondToCommand (interaction) {
   const command = commands.get(interaction.commandName)
@@ -191,7 +191,6 @@ client.on('guildMemberAdd', async member => {
     })
     return action
   })
-  console.log(embeds)
   await serverSettingsDB.put(serverConfig)
   if (actions.length > 0) sendEmbeds(logChannel, embeds)
 })
