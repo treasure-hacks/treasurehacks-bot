@@ -15,8 +15,8 @@ function sendEmbeds (channel, embedConfigs) {
     if (config.url) embed.setURL('https://discord.js.org/')
     if (config.thumbnail) embed.setThumbnail('https://i.imgur.com/AfFp7pu.png')
     if (config.image) embed.setImage('https://i.imgur.com/AfFp7pu.png')
-    if (config.timestamp) embed.setTimestamp(...config.fields)
-    if (config.footer) embed.setFooter(...config.fields)
+    if (config.timestamp) embed.setTimestamp(config.timestamp)
+    if (config.footer) embed.setFooter(config.footer)
     if (config.fields) embed.addFields(...config.fields)
 
     return embed

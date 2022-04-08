@@ -4,6 +4,35 @@ const { ChannelType } = require('discord-api-types/v9')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 
+function getChannelsAndRules (interaction) {
+  const channels = interaction.options.getString('channels')?.split(' ') || []
+  const roles = interaction.options.getString('roles')?.split(' ') || []
+
+  if (channels.some(c => !c.match(/^<#\d+>$/))) return { error: 'Channels are not formatted properly. Please enter channel names, separated by spaces. ie `#welcome #general`' }
+  if (roles.some(c => !c.match(/^<@&\d+>$/))) return { error: 'Roles are not formatted properly. Please enter channel names, separated by spaces. ie `@Group @Lobby`' }
+
+  function isValidRole (role) {
+    return !role.managed && role.name !== '@everyone'
+  }
+  const warnings = channels.filter(channel => {
+    return !interaction.guild.channels.cache.find(c => c.toString() === channel)
+  }).concat(roles.filter(role => {
+    return !interaction.guild.roles.cache.find(r => r.toString() === role && isValidRole(role))
+  }))
+
+  const serverData = {
+    channels: interaction.guild.channels.cache.filter(channel => {
+      return channels.includes(channel.toString())
+    }),
+    roles: interaction.guild.roles.cache.filter(role => {
+      return roles.includes(role.toString())
+    }),
+    warnings: warnings.length ? ['Could not find the following channels or roles: ' + warnings.join(', ')] : []
+  }
+
+  return serverData
+}
+
 async function addInviteRule (interaction, client, isUpdate) {
   const name = interaction.options.getString('name')
   const description = interaction.options.getString('description') || undefined
@@ -139,6 +168,89 @@ async function listTargetedInvites (interaction, client) {
     ephemeral: true
   })
 }
+async function removeInviteRule (interaction, client) {
+  const name = interaction.options.getString('name')
+  const [removeDescription, removeColor] = [interaction.options.getBoolean('description'), interaction.options.getBoolean('color')]
+
+  const { error, channels, roles, warnings } = getChannelsAndRules(interaction)
+  // warning color: #f0b800
+  if (error) {
+    interaction.reply({
+      embeds: [{
+        color: 0xff0000,
+        title: 'Invalid Arguments',
+        description: error
+      }],
+      ephemeral: true
+    })
+    return
+  }
+
+  const serverConfig = await serverSettingsDB.get(interaction.guild.id)
+
+  const rule = serverConfig.inviteRoles.find(rule => rule.name === name)
+  if (!rule) {
+    interaction.reply({
+      embeds: [{
+        color: 0xff0000,
+        title: 'Unable to delete ' + name,
+        description: 'This invite role assignment rule does not exist'
+      }],
+      ephemeral: true
+    })
+    return
+  }
+
+  if (removeDescription) delete rule.description
+  if (removeColor) delete rule.color
+  channels.forEach(channel => {
+    const updated = rule.inviteChannelIds.filter(c => c !== channel.id)
+    if (updated.length === 0) return warnings.push('Rule must still contain at least one channel. Channel modifications have been ignored.')
+    rule.inviteChannelIds = updated
+  })
+  roles.forEach(role => {
+    const updated = rule.rolesToAdd.filter(r => r !== role.id)
+    if (updated.length === 0) return warnings.push('Rule must still contain at least one role. Role modifications have been ignored.')
+    rule.rolesToAdd = updated
+  })
+
+  const replyContent = {
+    embeds: [],
+    ephemeral: true
+  }
+  if (warnings.length) {
+    replyContent.embeds.push({
+      color: 0xf0b800,
+      title: 'Warnings',
+      description: warnings.join('\n')
+    })
+  }
+
+  if (!roles.size && !channels.size && removeDescription == null && removeColor == null) {
+    // Delete the entire rule
+    replyContent.embeds.push({
+      title: `Deleted \`${name}\``,
+      thumbnail: { url: 'https://files.catbox.moe/y2ev8v.png' },
+      color: rule.color,
+      description: (rule.description ? rule.description + '\n\n' : '') +
+        `Applies to invites in: ${rule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
+        `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`
+    })
+    const updated = serverConfig.inviteRoles.filter(r => r !== rule)
+    await serverSettingsDB.put(Object.assign(serverConfig, { inviteRoles: updated }))
+  } else {
+    replyContent.embeds.push({
+      title: `Updated \`${name}\``,
+      color: rule.color,
+      description: (rule.description ? rule.description + '\n\n' : '') +
+        `Applies to invites in: ${rule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
+        `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`
+    })
+    await serverSettingsDB.put(serverConfig)
+  }
+
+  interaction.reply(replyContent)
+}
 
 function addUpdateCommandOptions (subcommand, requireInitial) {
   return subcommand
@@ -203,16 +315,30 @@ module.exports = {
       return subcommand
     })
     .addSubcommand(subcommand => {
-      subcommand.setName('update').setDescription('Add a new role given to people invited to a certain channel')
+      subcommand.setName('update').setDescription('Edit an invite role assignment rule')
       addUpdateCommandOptions(subcommand, false)
+      return subcommand
+    })
+    .addSubcommand(subcommand => {
+      subcommand
+        .setName('remove')
+        .setDescription('Remove linked channels or roles, or, if all params left blank, delete an entire invite role.')
+        .addStringOption(option => option.setName('name').setDescription('The name of the rule you want to edit or delete').setRequired(true))
+        .addStringOption(option => option.setName('channels').setDescription('Channels (with the #), separated by spaces, to remove from the specified rule'))
+        .addStringOption(option => option.setName('roles').setDescription('Roles (with the @), separated by spaces, to remove from the specified rule'))
+        .addBooleanOption(option => option.setName('description').setDescription('Whether to remove the description from the specifed rule'))
+        .addBooleanOption(option => option.setName('color').setDescription('Whether to remove the color from the specified rule'))
       return subcommand
     }),
   userPermissions: ['ADMINISTRATOR'],
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
+      case 'list': return //listTargetedInvites(interaction, client)
+      case 'details': return //listTargetedInvites(interaction, client)
       case 'invites': return listTargetedInvites(interaction, client)
       case 'add': return addInviteRule(interaction, client, false)
       case 'update': return addInviteRule(interaction, client, true)
+      case 'remove': return removeInviteRule(interaction, client)
     }
   }
 }
