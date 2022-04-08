@@ -72,7 +72,7 @@ async function addInviteRule (interaction, client, isUpdate) {
       embeds: [{
         title: `Updated \`${name}\``,
         color: existingRule.color,
-        description: (existingRule.description ? existingRule.description + '\n' : '') +
+        description: (existingRule.description ? existingRule.description + '\n\n' : '') +
           `Applies to invites in: ${existingRule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
           `\nPeople invited will have these roles: ${existingRule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`
       }]
@@ -89,7 +89,7 @@ async function addInviteRule (interaction, client, isUpdate) {
       embeds: [{
         title: `Created \`${name}\``,
         color,
-        description: (description ? description + '\n' : '') +
+        description: (description ? description + '\n\n' : '') +
           `Applies to invites in: ${channels.join(', ')}` +
           `\nPeople invited will have these roles: ${roles.join(', ')}`
       }]

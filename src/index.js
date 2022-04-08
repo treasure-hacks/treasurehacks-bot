@@ -129,13 +129,12 @@ client.on('guildMemberAdd', async member => {
     title: '',
     description: `<@!${member.id}> has been invited to the server!`,
     fields: [
-      { name: 'Username', value: `${member.user.username}#${member.user.discriminator}`, inline: true },
       { name: 'Inviter', value: `${invite.inviter.username}#${invite.inviter.discriminator}`, inline: true },
+      { name: 'Code', value: invite.code, inline: true },
       { name: 'Channel', value: `${invite.channel.name}`, inline: true }
     ],
     timestamp: Date.now()
   }]
-  // sendMessage(logChannel, `${member.displayName} joined the server from an invite created by ${invite.inviter.username} (Code: ${invite.code})`)
 
   const actions = serverConfig.inviteRoles.filter(action => action.inviteChannelIds.includes(invite.channel.id))
   actions.forEach(action => {
@@ -143,12 +142,13 @@ client.on('guildMemberAdd', async member => {
       const role = member.guild.roles.cache.get(roleId)
       member.roles.add(role)
         .catch(() => { sendMessage(logChannel, `Failed to add role ${role.name} to ${member.displayName}`) })
-      embeds.push({
-        color: role.color,
-        author: { name: `${member.user.username}#${member.user.discriminator}`, iconURL: member.displayAvatarURL() },
-        title: '',
-        description: `@${member.displayName} was given the <@&${roleId}> role through this invite`
-      })
+    })
+    embeds.push({
+      color: action.color,
+      author: { name: `${member.user.username}#${member.user.discriminator}`, iconURL: member.displayAvatarURL() },
+      title: 'Invite Role Assignment: ' + action.name,
+      description: (action.description ? action.description + '\n\n' : '') +
+        `<@!${member.id}> was given the following roles: ${action.rolesToAdd.map(id => `<@&${id}>`).join(', ')}`
     })
   })
   console.log(embeds)
@@ -156,3 +156,5 @@ client.on('guildMemberAdd', async member => {
 })
 
 client.login(token)
+
+// TO DO: Handle role deletion
