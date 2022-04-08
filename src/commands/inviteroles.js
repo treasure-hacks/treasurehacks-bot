@@ -32,11 +32,22 @@ function getChannelsAndRoles (interaction) {
 
   return serverData
 }
+function getColorFromOptions (interaction) {
+  const color = interaction.options.getString('color') || undefined
+  if (!color) return { color: undefined }
+  if (color.match(/^#?[0-9a-f]{6}$/i)) return { color: parseInt(color.replace(/^#/, ''), 16) }
+
+  if (!color.match(/^<@&\d+>$/)) return { error: 'Color must either be valid HEX or contain exactly one role to inherit color from' }
+  const role = interaction.guild.roles.cache.find(role => {
+    return color === role.toString()
+  })
+  return { color: role.color }
+}
 
 async function addInviteRule (interaction, client, isUpdate, override) {
   const name = interaction.options.getString('name')
   const description = interaction.options.getString('description') || undefined
-  let color = interaction.options.getString('color') || undefined
+  const { color } = getColorFromOptions(interaction)
   if (name.match(/[^0-9a-zA-Z-_]/)) {
     interaction.reply({
       embeds: [{
@@ -48,26 +59,15 @@ async function addInviteRule (interaction, client, isUpdate, override) {
     })
     return
   }
-  if (color && !color.match(/^#?[0-9a-f]{6}$/i)) {
-    interaction.reply({
-      embeds: [{
-        color: 0xff0000,
-        title: 'Invalid Arguments',
-        description: 'Color must be valid HEX'
-      }],
-      ephemeral: true
-    })
-    return
-  }
-  if (color) color = parseInt(color.replace(/^#/, ''), 16)
   const { error, channels, roles, warnings } = getChannelsAndRoles(interaction)
-  const noFieldsInNew = (!channels.size || !roles.size) && !isUpdate
-  if (error || noFieldsInNew) {
+  const { error: error2 } = getColorFromOptions(interaction)
+  const noFieldsInNew = error ? true : (!channels.size || !roles.size) && !isUpdate
+  if (error || error2 || noFieldsInNew) {
     interaction.reply({
       embeds: [{
         color: 0xff0000,
         title: 'Invalid Arguments',
-        description: error || 'There must be at least one valid channel and one valid role'
+        description: error || error2 || 'There must be at least one valid channel and one valid role'
       }],
       ephemeral: true
     })
@@ -314,6 +314,42 @@ async function removeInviteRule (interaction, client) {
 
   interaction.reply(replyContent)
 }
+async function renameInviteRule (interaction, client) {
+  const name = interaction.options.getString('name')
+  const newName = interaction.options.getString('new')
+  if (newName.match(/[^0-9a-zA-Z-_]/)) {
+    interaction.reply({
+      embeds: [{
+        color: 0xff0000,
+        title: 'Invalid Arguments',
+        description: 'New name must only be alphanumeric characters, dashes, and underscores'
+      }],
+      ephemeral: true
+    })
+    return
+  }
+
+  const serverConfig = await serverSettingsDB.get(interaction.guild.id)
+  const rule = serverConfig.inviteRoles.find(r => r.name === name)
+  rule.name = newName
+  rule.updated_at = Date.now()
+
+  await serverSettingsDB.put(serverConfig)
+
+  const { created_at: createdAt, occurrences } = getStats(rule)
+  const embed = {
+    title: `Renamed \`${name}\` to \`${newName}\``,
+    color: rule.color,
+    description: (rule.description ? rule.description + '\n\n' : '') +
+      `Applies to invites in: ${rule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
+      `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`,
+    footer: { text: `Created ${createdAt} • Updated just now • ${occurrences} use${occurrences === 1 ? '' : 's'}` }
+  }
+  interaction.reply({
+    embeds: [embed],
+    ephemeral: true
+  })
+}
 
 function addUpdateCommandOptions (subcommand, requireInitial) {
   return subcommand
@@ -350,6 +386,12 @@ module.exports = {
         .setDescription('Get a list of role assignments that occur when someone joins the server')
     })
     .addSubcommand(subcommand => {
+      subcommand.setName('rename').setDescription('Rename an invite role assignment rule')
+        .addStringOption(option => option.setName('name').setDescription('The current name of your invite role assignment rule').setRequired(true))
+        .addStringOption(option => option.setName('new').setDescription('The new name of your invite role assignment rule').setRequired(true))
+      return subcommand
+    })
+    .addSubcommand(subcommand => {
       subcommand
         .setName('remove')
         .setDescription('Remove linked channels or roles, or, if all params left blank, delete an entire invite role.')
@@ -373,13 +415,14 @@ module.exports = {
   userPermissions: ['ADMINISTRATOR'],
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
-      case 'list': return listInviteRoles(interaction, client, true)
+      case 'add': return addInviteRule(interaction, client, false, false)
       case 'details': return listInviteRoles(interaction, client, false)
       case 'invites': return listTargetedInvites(interaction, client)
-      case 'add': return addInviteRule(interaction, client, false, false)
-      case 'update': return addInviteRule(interaction, client, true, false)
-      case 'set': return addInviteRule(interaction, client, true, true)
+      case 'list': return listInviteRoles(interaction, client, true)
+      case 'rename': return renameInviteRule(interaction, client)
       case 'remove': return removeInviteRule(interaction, client)
+      case 'set': return addInviteRule(interaction, client, true, true)
+      case 'update': return addInviteRule(interaction, client, true, false)
     }
   }
 }
