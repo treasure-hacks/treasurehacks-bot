@@ -197,4 +197,4 @@ client.on('guildMemberAdd', async member => {
 
 client.login(token)
 
-// TO DO: usage counter for each invite rule
+// TO DO: listen for role or channel create/destroy
