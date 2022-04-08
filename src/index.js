@@ -19,6 +19,7 @@ const client = new Client({
 }) // Connect to our discord bot
 const commands = new Collection() // Where the bot (slash) commands will be stored
 const commandArray = [] // Array to store commands for sending to the REST API
+const commandPermssions = {}
 const token = process.env.DISCORD_TOKEN
 
 function registerSlashCommands () {
@@ -29,8 +30,13 @@ function registerSlashCommands () {
   // Loop through the command files
   for (const file of commandFiles) {
     const command = require(`./commands/${file}`) // Get and define the command file.
+    if (command.userPermissions) {
+      command.data.defaultPermission = false
+      command.data.userPermissions = command.userPermissions
+    }
     commands.set(command.data.name, command) // Set the command name and file for handler to use.
     commandArray.push(command.data.toJSON()) // Push the command data to an array (for sending to the API).
+    commandPermssions[command.data.name] = command.userPermissions
   }
 
   const rest = new REST({ version: '9' }).setToken(token);
@@ -38,9 +44,38 @@ function registerSlashCommands () {
   (async () => {
     try {
       console.log('Refreshing application (/) commands...')
-      await rest.put(Routes.applicationCommands(client.user.id), {
+      const commandsResponse = await rest.put(Routes.applicationCommands(client.user.id), {
         body: commandArray
       })
+
+      client.guilds.cache.forEach(guild => {
+        function getRoles (commandName) {
+          const permissions = commandPermssions[commandName]
+          if (!permissions) return null
+          return guild.roles.cache.filter(role => role.permissions.has(permissions) && !role.managed)
+        }
+
+        const fullPermissions = commandsResponse.reduce((previous, current) => {
+          const roles = getRoles(current.name)
+          // console.log(current.name, roles)
+          if (!roles) return previous
+          const permissions = roles.map((p, id) => {
+            return {
+              id,
+              type: 'ROLE',
+              permission: true
+            }
+          })
+          previous.push({
+            id: current.id,
+            permissions: permissions.concat({ id: guild.ownerId, type: 'USER', permission: true })
+          })
+          return previous
+        }, [])
+        console.log(fullPermissions)
+        guild.commands.permissions.set({ fullPermissions })
+      })
+
       console.log('Successfully reloaded application (/) commands.')
     } catch (error) {
       console.error(error)
@@ -157,4 +192,4 @@ client.on('guildMemberAdd', async member => {
 
 client.login(token)
 
-// TO DO: Handle role deletion
+// TO DO: Handle role deletion, one param for channels and roles

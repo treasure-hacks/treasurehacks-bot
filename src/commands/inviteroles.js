@@ -207,6 +207,7 @@ module.exports = {
       addUpdateCommandOptions(subcommand, false)
       return subcommand
     }),
+  userPermissions: ['ADMINISTRATOR'],
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
       case 'invites': return listTargetedInvites(interaction, client)
