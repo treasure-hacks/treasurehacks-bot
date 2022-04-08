@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders')
 const { Deta } = require('deta')
-// const { ChannelType } = require('discord-api-types/v9')
+const { getStats } = require('../modules/role-stats')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 
@@ -32,27 +32,8 @@ function getChannelsAndRoles (interaction) {
 
   return serverData
 }
-function getStats (rule) {
-  function relativeTime (oldTime) {
-    const difference = Math.round((Date.now() - oldTime) / 1000)
-    switch (true) {
-      case difference < 1: return 'just now'
-      case difference < 60: return difference + 's'
-      case difference < 3600: return Math.floor(difference / 60) + 'm'
-      case difference < 86400: return Math.floor(difference / 3600) + 'h'
-      case difference < 86400 * 7: return Math.floor(difference / 86400) + 'd'
-      default: return new Date(oldTime).toLocaleDateString()
-    }
-  }
-  const { created_at: creationDate, updated_at: updateDate, occurrences } = rule
-  return {
-    created_at: relativeTime(creationDate),
-    updated_at: relativeTime(updateDate),
-    occurrences
-  }
-}
 
-async function addInviteRule (interaction, client, isUpdate) {
+async function addInviteRule (interaction, client, isUpdate, override) {
   const name = interaction.options.getString('name')
   const description = interaction.options.getString('description') || undefined
   let color = interaction.options.getString('color') || undefined
@@ -135,8 +116,13 @@ async function addInviteRule (interaction, client, isUpdate) {
   if (existingRule) {
     if (description) existingRule.description = description
     if (color) existingRule.color = color
-    existingRule.inviteChannelIds.push(...channels.map(c => c.id))
-    existingRule.rolesToAdd.push(...roles.map(r => r.id))
+    if (override) {
+      existingRule.inviteChannelIds = channels.map(c => c.id)
+      existingRule.rolesToAdd = roles.map(r => r.id)
+    } else {
+      existingRule.inviteChannelIds.push(...channels.map(c => c.id))
+      existingRule.rolesToAdd.push(...roles.map(r => r.id))
+    }
     existingRule.inviteChannelIds = [...new Set(existingRule.inviteChannelIds)]
     existingRule.rolesToAdd = [...new Set(existingRule.rolesToAdd)]
     existingRule.updated_at = Date.now()
@@ -364,7 +350,12 @@ module.exports = {
       return subcommand
     })
     .addSubcommand(subcommand => {
-      subcommand.setName('update').setDescription('Edit an invite role assignment rule')
+      subcommand.setName('update').setDescription('Add fields to an invite role assignment rule')
+      addUpdateCommandOptions(subcommand, false)
+      return subcommand
+    })
+    .addSubcommand(subcommand => {
+      subcommand.setName('set').setDescription('Override fields in an invite role assignment rule')
       addUpdateCommandOptions(subcommand, false)
       return subcommand
     })
@@ -385,8 +376,9 @@ module.exports = {
       case 'list': return listInviteRoles(interaction, client, true)
       case 'details': return listInviteRoles(interaction, client, false)
       case 'invites': return listTargetedInvites(interaction, client)
-      case 'add': return addInviteRule(interaction, client, false)
-      case 'update': return addInviteRule(interaction, client, true)
+      case 'add': return addInviteRule(interaction, client, false, false)
+      case 'update': return addInviteRule(interaction, client, true, false)
+      case 'set': return addInviteRule(interaction, client, true, true)
       case 'remove': return removeInviteRule(interaction, client)
     }
   }

@@ -5,6 +5,7 @@ const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 
 const { sendMessage, sendEmbeds } = require('./modules/message')
+const { getStats } = require('./modules/role-stats')
 
 const { REST } = require('@discordjs/rest')
 const { Routes } = require('discord-api-types/v9')
@@ -170,20 +171,27 @@ client.on('guildMemberAdd', async member => {
   }]
 
   const actions = serverConfig.inviteRoles.filter(action => action.inviteChannelIds.includes(invite.channel.id))
-  actions.forEach(action => {
+  serverConfig.inviteRoles = serverConfig.inviteRoles.map(action => {
+    if (!action.inviteChannelIds.includes(invite.channel.id)) return action
+    action.occurrences += 1
     action.rolesToAdd.forEach(roleId => {
       const role = member.guild.roles.cache.get(roleId)
       member.roles.add(role)
         .catch(() => { sendMessage(logChannel, `Failed to add role ${role.name} to ${member.displayName}`) })
     })
+    const stats = getStats(action)
     embeds.push({
       color: action.color,
       author: { name: `${member.user.username}#${member.user.discriminator}`, iconURL: member.displayAvatarURL() },
       title: 'Invite Role Assignment: ' + action.name,
       description: (action.description ? action.description + '\n\n' : '') +
-        `<@!${member.id}> was given the following roles: ${action.rolesToAdd.map(id => `<@&${id}>`).join(', ')}`
+        `<@!${member.id}> was given the following roles: ${action.rolesToAdd.map(id => `<@&${id}>`).join(', ')}`,
+      footer: `Created ${stats.created_at} • Updated ${stats.updated_at} • ${stats.occurrences} use${stats.occurrences === 1 ? '' : 's'}`
     })
+    return action
   })
+  console.log(embeds)
+  await serverSettingsDB.put(serverConfig)
   if (actions.length > 0) sendEmbeds(logChannel, embeds)
 })
 
