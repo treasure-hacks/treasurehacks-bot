@@ -12,6 +12,6 @@ module.exports = {
       url: 'https://uselessfacts.jsph.pl/random.json?language=en'
     }).catch(e => {})
     if (!fact?.data) return interaction.reply(greetings[Math.floor(Math.random() * greetings.length)])
-    return interaction.reply(`${greetings[Math.floor(Math.random() * greetings.length)]} Did you know that ${fact.data.text.replace(/[.!?]\s*$/, '')}?`)
+    return interaction.reply(`${greetings[Math.floor(Math.random() * greetings.length)]} Did you know that ${fact.data.text.replace(/[.!?]\s*$/, '').replace(/`/g, '\'')}?`)
   }
 }
