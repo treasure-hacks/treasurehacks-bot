@@ -33,7 +33,8 @@ async function setLog (interaction, client) {
     }
   }
   interaction.reply({
-    embeds: [embed]
+    embeds: [embed],
+    ephemeral: channel && !channel.id
   })
 }
 
