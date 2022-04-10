@@ -205,4 +205,21 @@ client.on('guildMemberAdd', async member => {
 
 client.login(token)
 
+const PORT = process.env.PORT
+const express = require('express')
+const site = express()
+site.use(express.json({ extended: true, limit: '5mb' }))
+site.use(express.urlencoded({ extended: true }))
+site.get('/addToMyServer', (req, res) => {
+  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.BOT_CLIENT_ID}&permissions=8&scope=applications.commands%20bot`)
+})
+site.use((req, res) => {
+  res.send('404 Page not found')
+})
+const http = require('http')
+const server = http.Server(site)
+server.listen(PORT, function () {
+  console.log('Listening on port ' + PORT)
+})
+
 // TO DO: listen for role or channel create/destroy
