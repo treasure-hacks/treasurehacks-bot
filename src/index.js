@@ -108,6 +108,8 @@ async function loadInvites () {
     const firstInvites = await guild.invites.fetch()
     const inviteArray = firstInvites.map((invite) => [invite.code, invite.uses])
     invites.set(guild.id, new Collection(inviteArray))
+    const serverConfig = await serverSettingsDB.get(guild.id)
+    if (!serverConfig) serverSettingsDB.put({ key: guild.id, inviteLogChannel: null, inviteRoles: [] })
   })
 }
 function updateGuildInvites (guild) {
@@ -125,9 +127,14 @@ function trackInvites (client) {
     // Update cache on new invites
     invites.get(invite.guild.id).set(invite.code, invite.uses)
   })
-  client.on('guildCreate', (guild) => {
+  client.on('guildCreate', async (guild) => {
     // We've been added to a new Guild. Let's fetch all the invites, and save it to our cache
     updateGuildInvites(guild)
+    await serverSettingsDB.put({
+      key: guild.id,
+      inviteLogChannel: null,
+      inviteRoles: []
+    })
   })
   client.on('guildDelete', (guild) => {
     // We've been removed from a Guild. Let's delete all their invites
