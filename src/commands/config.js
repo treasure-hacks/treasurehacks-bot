@@ -15,7 +15,7 @@ async function setLog (interaction, client) {
       color: 0xff0000
     }
   } else if (!channel) {
-    serverConfig.logChannel = null
+    serverConfig.inviteLogChannel = null
     await serverSettingsDB.put(serverConfig)
     embed = {
       title: 'Success',
@@ -23,7 +23,8 @@ async function setLog (interaction, client) {
       color: 0x00ff00
     }
   } else {
-    serverConfig.logChannel = channel.id
+    serverConfig.inviteLogChannel = channel.id
+    serverConfig.logChannel = undefined
     await serverSettingsDB.put(serverConfig)
     embed = {
       title: 'Success',
@@ -32,8 +33,7 @@ async function setLog (interaction, client) {
     }
   }
   interaction.reply({
-    embeds: [embed],
-    ephemeral: true
+    embeds: [embed]
   })
 }
 

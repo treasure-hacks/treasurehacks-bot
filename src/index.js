@@ -156,7 +156,7 @@ client.on('guildMemberAdd', async member => {
   updateGuildInvites(member.guild)
 
   const channels = await member.guild.channels.fetch()
-  const logChannel = channels.get(serverConfig.logChannel)
+  const inviteLogChannel = channels.get(serverConfig.inviteLogChannel)
 
   const embeds = [{
     color: parseInt('5a686c', 16),
@@ -171,28 +171,36 @@ client.on('guildMemberAdd', async member => {
     timestamp: Date.now()
   }]
 
-  const actions = serverConfig.inviteRoles.filter(action => action.inviteChannelIds.includes(invite.channel.id))
+  const actions = serverConfig.inviteRoles.filter(action => action.inviteChannelIds?.includes(invite.channel.id))
   serverConfig.inviteRoles = serverConfig.inviteRoles.map(action => {
-    if (!action.inviteChannelIds.includes(invite.channel.id)) return action
+    if (!action.inviteChannelIds?.includes(invite.channel.id)) return action
     action.occurrences += 1
     action.rolesToAdd.forEach(roleId => {
       const role = member.guild.roles.cache.get(roleId)
       member.roles.add(role)
-        .catch(() => { sendMessage(logChannel, `Failed to add role ${role.name} to ${member.displayName}`) })
+        .catch(() => { sendMessage(inviteLogChannel, `Failed to add role ${role.name} to ${member.displayName}`) })
     })
+    setTimeout(() => {
+      action.rolesToRemove.forEach(roleId => {
+        const role = member.guild.roles.cache.get(roleId)
+        member.roles.remove(role)
+          .catch(() => { sendMessage(inviteLogChannel, `Failed to remove role ${role.name} from ${member.displayName}`) })
+      })
+    }, 2000)
     const stats = getStats(action)
     embeds.push({
       color: action.color,
       author: { name: `${member.user.username}#${member.user.discriminator}`, iconURL: member.displayAvatarURL() },
       title: 'Invite Role Assignment: ' + action.name,
       description: (action.description ? action.description + '\n\n' : '') +
-        `<@!${member.id}> was given the following roles: ${action.rolesToAdd.map(id => `<@&${id}>`).join(', ')}`,
+        `Assigned the following roles to <@!${member.id}>: ${action.rolesToAdd.map(id => `<@&${id}>`).join(', ')}\n` +
+        `Removed the following roles from <@!${member.id}>: ${action.rolesToRemove.map(id => `<@&${id}>`).join(', ')}`,
       footer: `Created ${stats.created_at} • Updated ${stats.updated_at} • ${stats.occurrences} use${stats.occurrences === 1 ? '' : 's'}`
     })
     return action
   })
   await serverSettingsDB.put(serverConfig)
-  if (actions.length > 0) sendEmbeds(logChannel, embeds)
+  if (actions.length > 0) sendEmbeds(inviteLogChannel, embeds)
 })
 
 client.login(token)

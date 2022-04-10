@@ -6,10 +6,12 @@ const serverSettingsDB = deta.Base('server-settings')
 
 function getChannelsAndRoles (interaction) {
   const channels = interaction.options.getString('channels')?.split(' ') || []
-  const roles = interaction.options.getString('roles')?.split(' ') || []
+  const roles = interaction.options.getString('add-roles')?.split(' ') || []
+  const removeRoles = interaction.options.getString('remove-roles')?.split(' ') || []
 
   if (channels.some(c => !c.match(/^<#\d+>$/))) return { error: 'Channels are not formatted properly. Please enter channel names, separated by spaces. ie `#welcome #general`' }
   if (roles.some(c => !c.match(/^<@&\d+>$/))) return { error: 'Roles are not formatted properly. Please enter channel names, separated by spaces. ie `@Group @Lobby`' }
+  if (removeRoles.some(c => !c.match(/^<@&\d+>$/))) return { error: 'Roles are not formatted properly. Please enter channel names, separated by spaces. ie `@Group @Lobby`' }
 
   function isValidRole (role) {
     return !role.managed && role.name !== '@everyone'
@@ -26,6 +28,9 @@ function getChannelsAndRoles (interaction) {
     }),
     roles: interaction.guild.roles.cache.filter(role => {
       return roles.includes(role.toString())
+    }),
+    removeRoles: interaction.guild.roles.cache.filter(role => {
+      return removeRoles.includes(role.toString())
     }),
     warnings: warnings.length ? ['Could not find the following channels or roles: ' + warnings.join(', ')] : []
   }
@@ -59,7 +64,7 @@ async function addInviteRule (interaction, client, isUpdate, override) {
     })
     return
   }
-  const { error, channels, roles, warnings } = getChannelsAndRoles(interaction)
+  const { error, channels, roles, removeRoles, warnings } = getChannelsAndRoles(interaction)
   const { error: error2 } = getColorFromOptions(interaction)
   const noFieldsInNew = error ? true : (!channels.size || !roles.size) && !isUpdate
   if (error || error2 || noFieldsInNew) {
@@ -102,8 +107,8 @@ async function addInviteRule (interaction, client, isUpdate, override) {
     })
   }
   const replyContent = {
-    embeds: [],
-    ephemeral: true
+    embeds: [] // ,
+    // ephemeral: true
   }
   if (warnings.length) {
     replyContent.embeds.push({
@@ -119,12 +124,15 @@ async function addInviteRule (interaction, client, isUpdate, override) {
     if (override) {
       existingRule.inviteChannelIds = channels.map(c => c.id)
       existingRule.rolesToAdd = roles.map(r => r.id)
+      existingRule.rolesToRemove = removeRoles.map(r => r.id)
     } else {
       existingRule.inviteChannelIds.push(...channels.map(c => c.id))
       existingRule.rolesToAdd.push(...roles.map(r => r.id))
+      existingRule.rolesToRemove.push(...removeRoles.map(r => r.id))
     }
     existingRule.inviteChannelIds = [...new Set(existingRule.inviteChannelIds)]
     existingRule.rolesToAdd = [...new Set(existingRule.rolesToAdd)]
+    existingRule.rolesToRemove = [...new Set(existingRule.rolesToRemove)]
     existingRule.updated_at = Date.now()
     const { created_at: createdAt, occurrences } = getStats(existingRule)
     replyContent.embeds.push({
@@ -132,18 +140,21 @@ async function addInviteRule (interaction, client, isUpdate, override) {
       color: existingRule.color,
       description: (existingRule.description ? existingRule.description + '\n\n' : '') +
         `Applies to invites in: ${existingRule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
-        `\nPeople invited will have these roles: ${existingRule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`,
+        `\nPeople invited will have these roles: ${existingRule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}` +
+        `\nPeople invited will lose these roles: ${existingRule.rolesToRemove.map(role => `<@&${role}>`).join(', ')}`,
       footer: { text: `Created ${createdAt} • Updated just now • ${occurrences} use${occurrences === 1 ? '' : 's'}` }
     })
   } else {
     const channelsArray = [...new Set(channels.values())]
     const rolesArray = [...new Set(roles.values())]
+    const roleRemovalArray = [...new Set(removeRoles.values())]
     serverConfig.inviteRoles.push({
       name,
       color: color,
       description,
       inviteChannelIds: channelsArray.map(c => c.id),
       rolesToAdd: rolesArray.map(r => r.id),
+      rolesToRemove: roleRemovalArray.map(r => r.id),
       occurrences: 0,
       created_at: Date.now(),
       updated_at: Date.now()
@@ -161,10 +172,12 @@ async function addInviteRule (interaction, client, isUpdate, override) {
   serverSettingsDB.put(serverConfig)
   interaction.reply(replyContent)
 }
-async function listInviteRoles (interaction, client, listAll) {
+async function listInviteRoles (interaction, client) {
+  const name = interaction.options.getString('name')
+  const listAll = name == null
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
   const embeds = serverConfig.inviteRoles.filter(rule => {
-    return rule.name === interaction.options.getString('name') || listAll
+    return rule.name === name || listAll
   }).map(rule => {
     const stats = getStats(rule)
     return {
@@ -172,7 +185,8 @@ async function listInviteRoles (interaction, client, listAll) {
       color: rule.color,
       description: (rule.description ? rule.description + '\n\n' : '') +
         `Applies to invites in: ${rule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
-        `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`,
+        `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}` +
+        `\nPeople invited will lose these roles: ${rule.rolesToRemove.map(role => `<@&${role}>`).join(', ')}`,
       footer: { text: `Created ${stats.created_at} • Updated ${stats.updated_at} • ${stats.occurrences} use${stats.occurrences === 1 ? '' : 's'}` }
     }
   })
@@ -189,8 +203,9 @@ async function listInviteRoles (interaction, client, listAll) {
   }
 
   return interaction.reply({
+    content: listAll ? 'Details of all role assignments:' : undefined,
     embeds,
-    ephemeral: true
+    ephemeral: !embeds.length
   })
 }
 async function listTargetedInvites (interaction, client) {
@@ -211,7 +226,11 @@ async function listTargetedInvites (interaction, client) {
       .filter(rule => rule.inviteChannelIds.includes(invite.channel))
       .map(rule => rule.rolesToAdd)
       .flat()
-    Object.assign(invite, { associatedRoles })
+    const associatedRolesToRemove = serverConfig.inviteRoles
+      .filter(rule => rule.inviteChannelIds.includes(invite.channel))
+      .map(rule => rule.rolesToRemove)
+      .flat()
+    Object.assign(invite, { associatedRoles, associatedRolesToRemove })
   })
 
   const embeds = invitesWithAssignment.map(invite => {
@@ -220,20 +239,23 @@ async function listTargetedInvites (interaction, client) {
       color,
       title: '',
       author: { name: `${invite.inviter.username} (via ${invite.code})`, iconURL: invite.inviter.displayAvatarURL() },
-      description: `Invite Channel: <#${invite.channel}>, Uses: ${invite.uses}\nRoles Assigned: ${invite.associatedRoles.map(roleId => `<@&${roleId}>`).join(', ')}`
+      description: `Invite Channel: <#${invite.channel}>, Uses: ${invite.uses}\n` +
+        `Roles Assigned: ${invite.associatedRoles.map(roleId => `<@&${roleId}>`).join(', ')}\n` +
+        `Roles Removed: ${invite.associatedRolesToRemove.map(roleId => `<@&${roleId}>`).join(', ')}`
     }
   })
 
   return interaction.reply({
-    embeds,
-    ephemeral: true
+    content: 'All invites that will assign or remove roles from people who join through them:',
+    embeds // ,
+    // ephemeral: true
   })
 }
 async function removeInviteRule (interaction, client) {
   const name = interaction.options.getString('name')
   const [removeDescription, removeColor] = [interaction.options.getBoolean('description'), interaction.options.getBoolean('color')]
 
-  const { error, channels, roles, warnings } = getChannelsAndRoles(interaction)
+  const { error, channels, roles, removeRoles, warnings } = getChannelsAndRoles(interaction)
   if (error) {
     interaction.reply({
       embeds: [{
@@ -273,10 +295,14 @@ async function removeInviteRule (interaction, client) {
     if (updated.length === 0) return warnings.push('Rule must still contain at least one role. Role modifications have been ignored.')
     rule.rolesToAdd = updated
   })
+  removeRoles.forEach(role => {
+    const updated = rule.rolesToRemove.filter(r => r !== role.id)
+    rule.rolesToRemove = updated
+  })
 
   const replyContent = {
-    embeds: [],
-    ephemeral: true
+    embeds: [] // ,
+    // ephemeral: true
   }
   if (warnings.length) {
     replyContent.embeds.push({
@@ -295,7 +321,8 @@ async function removeInviteRule (interaction, client) {
       color: rule.color,
       description: (rule.description ? rule.description + '\n\n' : '') +
         `Applies to invites in: ${rule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
-        `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`,
+        `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}` +
+        `\nPeople invited will lose these roles: ${rule.rolesToRemove.map(role => `<@&${role}>`).join(', ')}`,
       footer: { text: `Created ${stats.created_at} • Deleted just now • ${stats.occurrences} use${stats.occurrences === 1 ? '' : 's'}` }
     })
     const updated = serverConfig.inviteRoles.filter(r => r !== rule)
@@ -306,7 +333,8 @@ async function removeInviteRule (interaction, client) {
       color: rule.color,
       description: (rule.description ? rule.description + '\n\n' : '') +
         `Applies to invites in: ${rule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
-        `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`,
+        `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}` +
+        `\nPeople invited will lose these roles: ${rule.rolesToRemove.map(role => `<@&${role}>`).join(', ')}`,
       footer: { text: `Created ${stats.created_at} • Updated ${stats.updated_at} • ${stats.occurrences} use${stats.occurrences === 1 ? '' : 's'}` }
     })
     await serverSettingsDB.put(serverConfig)
@@ -342,12 +370,13 @@ async function renameInviteRule (interaction, client) {
     color: rule.color,
     description: (rule.description ? rule.description + '\n\n' : '') +
       `Applies to invites in: ${rule.inviteChannelIds.map(id => `<#${id}>`).join(', ')}` +
-      `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}`,
+      `\nPeople invited will have these roles: ${rule.rolesToAdd.map(role => `<@&${role}>`).join(', ')}` +
+      `\nPeople invited will lose these roles: ${rule.rolesToRemove.map(role => `<@&${role}>`).join(', ')}`,
     footer: { text: `Created ${createdAt} • Updated just now • ${occurrences} use${occurrences === 1 ? '' : 's'}` }
   }
   interaction.reply({
-    embeds: [embed],
-    ephemeral: true
+    embeds: [embed] // ,
+    // ephemeral: true
   })
 }
 
@@ -355,7 +384,8 @@ function addUpdateCommandOptions (subcommand, requireInitial) {
   return subcommand
     .addStringOption(option => option.setName('name').setDescription('The name of your invite role assignment rule').setRequired(true))
     .addStringOption(option => option.setName('channels').setDescription('The channel for select invites (with the #), separated by spaces').setRequired(requireInitial))
-    .addStringOption(option => option.setName('roles').setDescription('Roles (with the @), separated by spaces, to grant to people who are invited to this channel').setRequired(requireInitial))
+    .addStringOption(option => option.setName('add-roles').setDescription('Roles (with the @), separated by spaces, to grant to people who are invited to this channel').setRequired(requireInitial))
+    .addStringOption(option => option.setName('remove-roles').setDescription('Roles (with the @), separated by spaces, to remove from those invited to this channel'))
     .addStringOption(option => option.setName('description').setDescription('A description that describes this invite role assignment rule'))
     .addStringOption(option => option.setName('color').setDescription('A HEX string to assign a color to this rule'))
 }
@@ -372,18 +402,13 @@ module.exports = {
     .addSubcommand(subcommand => {
       return subcommand
         .setName('details')
-        .setDescription('Get details about one role assignment rule')
-        .addStringOption(option => option.setName('name').setDescription('The name of the assignment rule').setRequired(true))
+        .setDescription('List role assignments that occur when someone joins the server')
+        .addStringOption(option => option.setName('name').setDescription('The name of the assignment rule'))
     })
     .addSubcommand(subcommand => {
       return subcommand
         .setName('invites')
         .setDescription('Get a list of active invites that will add roles to people who use them')
-    })
-    .addSubcommand(subcommand => {
-      return subcommand
-        .setName('list')
-        .setDescription('Get a list of role assignments that occur when someone joins the server')
     })
     .addSubcommand(subcommand => {
       subcommand.setName('rename').setDescription('Rename an invite role assignment rule')
@@ -397,7 +422,8 @@ module.exports = {
         .setDescription('Remove linked channels or roles, or, if all params left blank, delete an entire invite role.')
         .addStringOption(option => option.setName('name').setDescription('The name of the rule you want to edit or delete').setRequired(true))
         .addStringOption(option => option.setName('channels').setDescription('Channels (with the #), separated by spaces, to remove from the specified rule'))
-        .addStringOption(option => option.setName('roles').setDescription('Roles (with the @), separated by spaces, to remove from the specified rule'))
+        .addStringOption(option => option.setName('add-roles').setDescription('Roles (with the @) to stop adding to users who join channels matching this rule'))
+        .addStringOption(option => option.setName('remove-roles').setDescription('Roles (with the @) to stop removing from users who join channels matching this rule'))
         .addBooleanOption(option => option.setName('description').setDescription('Whether to remove the description from the specifed rule'))
         .addBooleanOption(option => option.setName('color').setDescription('Whether to remove the color from the specified rule'))
       return subcommand
@@ -416,9 +442,8 @@ module.exports = {
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
       case 'add': return addInviteRule(interaction, client, false, false)
-      case 'details': return listInviteRoles(interaction, client, false)
+      case 'details': return listInviteRoles(interaction, client)
       case 'invites': return listTargetedInvites(interaction, client)
-      case 'list': return listInviteRoles(interaction, client, true)
       case 'rename': return renameInviteRule(interaction, client)
       case 'remove': return removeInviteRule(interaction, client)
       case 'set': return addInviteRule(interaction, client, true, true)
