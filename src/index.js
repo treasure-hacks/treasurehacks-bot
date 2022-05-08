@@ -23,32 +23,8 @@ const commands = new Collection() // Where the bot (slash) commands will be stor
 const commandArray = [] // Array to store commands for sending to the REST API
 const commandPermssions = {}
 const token = process.env.DISCORD_TOKEN
+const rest = new REST({ version: '9' }).setToken(token)
 
-function applyCommandPermissions (guild, commands) {
-  function getRoles (commandName) {
-    const permissions = commandPermssions[commandName]
-    if (!permissions) return null
-    return guild.roles.cache.filter(role => role.permissions.has(permissions) && !role.managed)
-  }
-
-  const fullPermissions = commands.reduce((previous, current) => {
-    const roles = getRoles(current.name)
-    if (!roles) return previous
-    const permissions = roles.map((p, id) => {
-      return {
-        id,
-        type: 'ROLE',
-        permission: true
-      }
-    })
-    previous.push({
-      id: current.id,
-      permissions: permissions.concat({ id: guild.ownerId, type: 'USER', permission: true })
-    })
-    return previous
-  }, [])
-  guild.commands.permissions.set({ fullPermissions })
-}
 function registerSlashCommands () {
   const commandFiles = fs
     .readdirSync('src/commands')
@@ -59,25 +35,23 @@ function registerSlashCommands () {
     const command = require(`./commands/${file}`) // Get and define the command file.
     if (command.userPermissions) {
       command.data.defaultPermission = false
+      command.data.defaultMemberPermissions = command.defaultMemberPermissions
       command.data.userPermissions = command.userPermissions
     } else {
       command.data.defaultPermission = true
+      command.data.defaultMemberPermissions = true
     }
     commands.set(command.data.name, command) // Set the command name and file for handler to use.
     commandArray.push(command.data.toJSON()) // Push the command data to an array (for sending to the API).
     commandPermssions[command.data.name] = command.userPermissions
   }
 
-  const rest = new REST({ version: '9' }).setToken(token);
   // Send command list to Discord API
   (async () => {
     try {
       console.log('Refreshing application (/) commands...')
-      const commandsResponse = await rest.put(Routes.applicationCommands(client.user.id), {
+      await rest.put(Routes.applicationCommands(client.user.id), {
         body: commandArray.sort((a, b) => (commandPermssions[a.name]?.length || 0) - (commandPermssions[b.name]?.length || 0))
-      })
-      client.guilds.cache.forEach(guild => {
-        applyCommandPermissions(guild, commandsResponse)
       })
 
       console.log('Successfully reloaded application (/) commands.')
@@ -134,7 +108,6 @@ function trackInvites (client) {
   client.on('guildCreate', async (guild) => {
     // We've been added to a new Guild. Let's fetch all the invites, and save it to our cache
     updateGuildInvites(guild)
-    applyCommandPermissions(guild, commandArray)
     await serverSettingsDB.put({
       key: guild.id,
       inviteLogChannel: null,

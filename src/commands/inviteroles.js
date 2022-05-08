@@ -439,6 +439,7 @@ module.exports = {
       return subcommand
     }),
   userPermissions: ['ADMINISTRATOR'],
+  defaultMemberPermissions: 8,
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
       case 'add': return addInviteRule(interaction, client, false, false)

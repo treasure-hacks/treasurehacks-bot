@@ -92,6 +92,7 @@ module.exports = {
       return subcommand
     }),
   userPermissions: ['ADMINISTRATOR'],
+  defaultMemberPermissions: 8,
   execute: async (interaction, client) => {
     // Make sure all members' roles are up to date
     await interaction.guild.members.fetch({ force: true })

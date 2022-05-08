@@ -47,11 +47,12 @@ module.exports = {
         .addChannelOption(option => option
           .setName('channel')
           .setDescription('The channel that should be used to log Treasure Hacks Bot events. Leave blank to disable')
-          .addChannelType(ChannelType.GuildText)
+          .addChannelTypes(ChannelType.GuildText)
         )
       return subcommand
     }),
   userPermissions: ['ADMINISTRATOR'],
+  defaultMemberPermissions: 8,
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
       case 'log': return setLog(interaction, client)
