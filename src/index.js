@@ -19,13 +19,14 @@ const client = new Client({
     Intents.FLAGS.GUILD_INVITES
   ]
 }) // Connect to our discord bot
-const commands = new Collection() // Where the bot (slash) commands will be stored
-const commandArray = [] // Array to store commands for sending to the REST API
+let commands = new Collection() // Where the bot (slash) commands will be stored
 const commandPermssions = {}
 const token = process.env.DISCORD_TOKEN
 const rest = new REST({ version: '9' }).setToken(token)
 
-function registerSlashCommands () {
+async function registerSlashCommands () {
+  commands = new Collection()
+  const commandArray = [] // Array to store commands for sending to the REST API
   const commandFiles = fs
     .readdirSync('src/commands')
     .filter(file => file.endsWith('.js')) // Get and filter all the files in the "Commands" Folder.
@@ -47,19 +48,17 @@ function registerSlashCommands () {
   }
 
   // Send command list to Discord API
-  (async () => {
-    try {
-      console.log('Refreshing application (/) commands...')
-      await rest.put(Routes.applicationCommands(client.user.id), {
-        body: commandArray.sort((a, b) => (commandPermssions[a.name]?.length || 0) - (commandPermssions[b.name]?.length || 0))
-      })
+  const body = commandArray.sort((a, b) => (commandPermssions[a.name]?.length || 0) - (commandPermssions[b.name]?.length || 0))
+  try {
+    console.log('Refreshing application (/) commands...')
+    await rest.put(Routes.applicationCommands(client.user.id), { body })
 
-      console.log('Successfully reloaded application (/) commands.')
-    } catch (error) {
-      console.error(error)
-    }
-  })()
-  console.log(`Logged in as \x1b[34m${client.user.tag}\x1b[0m`)
+    console.log('Successfully reloaded application (/) commands.')
+    return { success: true, message: 'Successfully reloaded application (/) commands' }
+  } catch (error) {
+    console.error(error)
+    return { success: false, error, request: body }
+  }
 }
 async function respondToCommand (interaction) {
   const command = commands.get(interaction.commandName)
@@ -122,6 +121,7 @@ function trackInvites (client) {
 trackInvites(client)
 
 client.once('ready', async () => {
+  console.log(`Logged in as \x1b[34m${client.user.tag}\x1b[0m`)
   registerSlashCommands()
   loadInvites()
 })
@@ -197,6 +197,11 @@ site.use(express.json({ extended: true, limit: '5mb' }))
 site.use(express.urlencoded({ extended: true }))
 site.get('/addToMyServer', (req, res) => {
   res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.BOT_CLIENT_ID}&permissions=8&scope=applications.commands%20bot`)
+})
+site.get('/refresh-commands', async (req, res) => {
+  if (req.query.key !== process.env.COMMAND_REFRESH_KEY) return res.send('Incorrect Key')
+  const result = await registerSlashCommands()
+  res.send(result)
 })
 site.use((req, res) => {
   res.send('404 Page not found')
