@@ -41,10 +41,11 @@ async function registerSlashCommands () {
     } else {
       command.data.defaultPermission = true
       command.data.defaultMemberPermissions = true
+      command.data.userPermissions = []
     }
     commands.set(command.data.name, command) // Set the command name and file for handler to use.
     commandArray.push(command.data.toJSON()) // Push the command data to an array (for sending to the API).
-    commandPermssions[command.data.name] = command.userPermissions
+    commandPermssions[command.data.name] = command.userPermissions || []
   }
 
   // Send command list to Discord API
@@ -52,9 +53,8 @@ async function registerSlashCommands () {
   try {
     console.log('Refreshing application (/) commands...')
     const commandResponse = await rest.put(Routes.applicationCommands(client.user.id), { body })
-
     console.log('Successfully reloaded application (/) commands.')
-    return { success: true, message: 'Successfully reloaded application (/) commands', response: commandResponse }
+    return { success: true, message: 'Successfully reloaded application (/) commands', request: body, response: commandResponse }
   } catch (error) {
     console.error(error)
     return { success: false, error, request: body }
