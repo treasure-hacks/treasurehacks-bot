@@ -51,10 +51,10 @@ async function registerSlashCommands () {
   const body = commandArray.sort((a, b) => (commandPermssions[a.name]?.length || 0) - (commandPermssions[b.name]?.length || 0))
   try {
     console.log('Refreshing application (/) commands...')
-    await rest.put(Routes.applicationCommands(client.user.id), { body })
+    const commandResponse = await rest.put(Routes.applicationCommands(client.user.id), { body })
 
     console.log('Successfully reloaded application (/) commands.')
-    return { success: true, message: 'Successfully reloaded application (/) commands' }
+    return { success: true, message: 'Successfully reloaded application (/) commands', response: commandResponse }
   } catch (error) {
     console.error(error)
     return { success: false, error, request: body }
