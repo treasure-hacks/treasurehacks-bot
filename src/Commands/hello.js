@@ -5,6 +5,8 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('hello')
     .setDescription('Say Hello To me!'),
+  userPermissions: [],
+  defaultPermission: true,
   execute: async (interaction, client) => {
     const greetings = ['Hey there!', 'Hello!', 'What\'s up?', 'Welcome to Treasure Hacks!', 'How\'s it going?', 'Hi!']
     const fact = await axios({
