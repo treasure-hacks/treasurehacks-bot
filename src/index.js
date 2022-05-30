@@ -188,6 +188,9 @@ client.on('guildMemberAdd', async member => {
   if (actions.length > 0) sendEmbeds(inviteLogChannel, embeds)
 })
 
+// Message Scanner
+require('./listeners/message')(client)
+
 client.login(token)
 
 const PORT = process.env.PORT
