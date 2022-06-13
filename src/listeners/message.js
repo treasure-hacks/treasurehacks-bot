@@ -18,9 +18,10 @@ module.exports = function (client) {
 
     const urlMatches = message.content.match(/\w+:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/g) || []
 
-    urlMatches.forEach(async match => {
+    let postDeleted = false;
+    [...new Set(urlMatches)].forEach(async match => {
       // Return if no url or if message can't be deleted
-      if (!match || !message.deletable) return
+      if (!match) return
       const url = new URL(match)
       let entry = await urlSafetyDB.get(url.hostname)
       if (!entry) {
@@ -42,10 +43,16 @@ module.exports = function (client) {
           message.member.timeout(timeoutHours * 3600 * 1000, 'Posting harmful links')
             .catch(e => console.error('Cannot timeout user', e))
           actions.push('timeout user')
-        case riskScore >= 50: // Delete, respond, log
-          await message.reply({ content: 'Message was deleted because it contained a harmful link' })
-          await message.delete()
+        case riskScore >= 50: {
+          // Delete, respond, log
+          if (!postDeleted && message.deletable) {
+            postDeleted = true
+            await message.reply({ content: 'Message was deleted because it contained a harmful link' })
+              .catch(e => /* could not reply */ console.error(e))
+            await message.delete()
+          }
           actions.push('delete message')
+        }
         case riskScore >= 25: // log
           actions.push('log URL')
           sendEmbeds(logChannel, [{
