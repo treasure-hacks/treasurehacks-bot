@@ -24,6 +24,10 @@ const commandPermssions = {}
 const token = process.env.DISCORD_TOKEN
 const rest = new REST({ version: '9' }).setToken(token)
 
+const enabledByDefault = {
+  linkScanner: true
+}
+
 async function registerSlashCommands () {
   commands = new Collection()
   const commandArray = [] // Array to store commands for sending to the REST API
@@ -86,7 +90,7 @@ async function loadInvites () {
     const inviteArray = firstInvites.map((invite) => [invite.code, invite.uses])
     invites.set(guild.id, new Collection(inviteArray))
     const serverConfig = await serverSettingsDB.get(guild.id)
-    if (!serverConfig) serverSettingsDB.put({ key: guild.id, inviteLogChannel: null, inviteRoles: [] })
+    if (!serverConfig) serverSettingsDB.put({ key: guild.id, inviteLogChannel: null, inviteRoles: [], enabledFeatures: enabledByDefault })
   })
 }
 function updateGuildInvites (guild) {
@@ -110,7 +114,8 @@ function trackInvites (client) {
     await serverSettingsDB.put({
       key: guild.id,
       inviteLogChannel: null,
-      inviteRoles: []
+      inviteRoles: [],
+      enabledFeatures: enabledByDefault
     })
   })
   client.on('guildDelete', (guild) => {

@@ -11,6 +11,7 @@ module.exports = function (client) {
     // Ignore messages sent by bots
     if (!message.member || message.member.user.bot) return
     const serverConfig = await serverSettingsDB.get(message.guild.id)
+    if (!serverConfig.enabledFeatures?.linkScanner) return
     // Same log channel for now
     const channels = await message.guild.channels.fetch()
     const logChannel = channels.get(serverConfig.inviteLogChannel)
@@ -31,7 +32,6 @@ module.exports = function (client) {
         urlSafetyDB.put(entry, url.hostname, { expireIn: 2592000 }) // Expire in 1 month
       }
       const { risk_score: riskScore } = entry
-      console.log(riskScore)
       let timeoutHours = 24
       const actions = []
       /* eslint-disable no-fallthrough */
