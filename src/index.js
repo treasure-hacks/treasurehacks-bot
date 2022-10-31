@@ -1,4 +1,5 @@
 require('dotenv').config()
+const path = require('path')
 
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
@@ -7,76 +8,15 @@ const serverSettingsDB = deta.Base('server-settings')
 const { sendMessage, sendEmbeds } = require('./modules/message')
 const { getStats } = require('./modules/role-stats')
 
-const { REST } = require('@discordjs/rest')
-const { Routes } = require('discord-api-types/v9')
+// Discord.JS Setup
 const fs = require('fs')
-const { Client, Intents, Collection } = require('discord.js')
-const client = new Client({
-  intents: [
-    Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MESSAGES,
-    Intents.FLAGS.GUILD_MEMBERS,
-    Intents.FLAGS.GUILD_INVITES
-  ]
-}) // Connect to our discord bot
-let commands = new Collection() // Where the bot (slash) commands will be stored
-const commandPermssions = {}
-const token = process.env.DISCORD_TOKEN
-const rest = new REST({ version: '9' }).setToken(token)
+const { Collection } = require('discord.js')
+
+// Treasure Hacks Bot Setup
+const { client, token, registerSlashCommands, respondToCommand } = require('./modules/bot-setup.js')
 
 const enabledByDefault = {
   linkScanner: true
-}
-
-async function registerSlashCommands () {
-  commands = new Collection()
-  const commandArray = [] // Array to store commands for sending to the REST API
-  const commandFiles = fs
-    .readdirSync('src/commands')
-    .filter(file => file.endsWith('.js')) // Get and filter all the files in the "Commands" Folder.
-
-  // Loop through the command files
-  for (const file of commandFiles) {
-    const command = require(`./commands/${file}`) // Get and define the command file.
-    if (command.userPermissions) {
-      command.data.defaultPermission = false
-      command.data.defaultMemberPermissions = command.defaultMemberPermissions
-      command.data.userPermissions = command.userPermissions
-    } else {
-      command.data.defaultPermission = true
-      command.data.defaultMemberPermissions = true
-      command.data.userPermissions = []
-    }
-    commands.set(command.data.name, command) // Set the command name and file for handler to use.
-    commandArray.push(command.data.toJSON()) // Push the command data to an array (for sending to the API).
-    commandPermssions[command.data.name] = command.userPermissions || []
-  }
-
-  // Send command list to Discord API
-  const body = commandArray.sort((a, b) => (commandPermssions[a.name]?.length || 0) - (commandPermssions[b.name]?.length || 0))
-  try {
-    console.log('Refreshing application (/) commands...')
-    const commandResponse = await rest.put(Routes.applicationCommands(client.user.id), { body })
-    console.log('Successfully reloaded application (/) commands.')
-    return { success: true, message: 'Successfully reloaded application (/) commands', request: body, response: commandResponse }
-  } catch (error) {
-    console.error(error)
-    return { success: false, error, request: body }
-  }
-}
-async function respondToCommand (interaction) {
-  const command = commands.get(interaction.commandName)
-  if (!command) return
-
-  try {
-    await command.execute(interaction, client)
-  } catch (error) {
-    console.error(error)
-    return interaction.reply({
-      content: 'There was an error while executing this command!',
-      ephemeral: true
-    })
-  }
 }
 
 // Track Invites
@@ -203,14 +143,24 @@ const express = require('express')
 const site = express()
 site.use(express.json({ extended: true, limit: '5mb' }))
 site.use(express.urlencoded({ extended: true }))
-site.get('/addToMyServer', (req, res) => {
-  res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${process.env.BOT_CLIENT_ID}&permissions=8&scope=applications.commands%20bot`)
-})
-site.get('/refresh-commands', async (req, res) => {
-  if (req.query.key !== process.env.COMMAND_REFRESH_KEY) return res.send('Incorrect Key')
-  const result = await registerSlashCommands()
-  res.send(result)
-})
+
+// Application web-accessible "API" routes
+function recursiveRoutes (folderName) {
+  fs.readdirSync(folderName).forEach(function (file) {
+    const fullName = path.join(folderName, file)
+    const stat = fs.lstatSync(fullName)
+
+    if (stat.isDirectory()) {
+      recursiveRoutes(fullName)
+    } else if (file.toLowerCase().indexOf('.js')) {
+      const routeName = fullName.replace(/^src\/routes|\.js$/g, '')
+      const route = require('../' + fullName)
+      site.use(routeName.replace(/\/index$/, ''), route)
+    }
+  })
+}
+recursiveRoutes('src/routes')
+
 site.use((req, res) => {
   res.send('404 Page not found')
 })
