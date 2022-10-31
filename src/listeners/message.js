@@ -12,9 +12,9 @@ module.exports = function (client) {
     if (!message.member || message.member.user.bot) return
     const serverConfig = await serverSettingsDB.get(message.guild.id)
     if (!serverConfig.enabledFeatures?.linkScanner) return
-    // Same log channel for now
+
     const channels = await message.guild.channels.fetch()
-    const logChannel = channels.get(serverConfig.inviteLogChannel)
+    const logChannel = channels.get(serverConfig.logChannel)
 
     const urlMatches = message.content.match(/\w+:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/g) || []
 

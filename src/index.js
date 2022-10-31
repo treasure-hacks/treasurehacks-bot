@@ -30,7 +30,7 @@ async function loadInvites () {
     const inviteArray = firstInvites.map((invite) => [invite.code, invite.uses])
     invites.set(guild.id, new Collection(inviteArray))
     const serverConfig = await serverSettingsDB.get(guild.id)
-    if (!serverConfig) serverSettingsDB.put({ key: guild.id, inviteLogChannel: null, inviteRoles: [], enabledFeatures: enabledByDefault })
+    if (!serverConfig) serverSettingsDB.put({ key: guild.id, logChannel: null, inviteRoles: [], enabledFeatures: enabledByDefault })
   })
 }
 function updateGuildInvites (guild) {
@@ -53,7 +53,7 @@ function trackInvites (client) {
     updateGuildInvites(guild)
     await serverSettingsDB.put({
       key: guild.id,
-      inviteLogChannel: null,
+      logChannel: null,
       inviteRoles: [],
       enabledFeatures: enabledByDefault
     })
@@ -86,7 +86,7 @@ client.on('guildMemberAdd', async member => {
   updateGuildInvites(member.guild)
 
   const channels = await member.guild.channels.fetch()
-  const inviteLogChannel = channels.get(serverConfig.inviteLogChannel)
+  const logChannel = channels.get(serverConfig.logChannel)
 
   const embeds = [{
     color: parseInt('5a686c', 16),
@@ -108,13 +108,13 @@ client.on('guildMemberAdd', async member => {
     action.rolesToAdd.forEach(roleId => {
       const role = member.guild.roles.cache.get(roleId)
       member.roles.add(role)
-        .catch(() => { sendMessage(inviteLogChannel, `Failed to add role ${role.name} to ${member.displayName}`) })
+        .catch(() => { sendMessage(logChannel, `Failed to add role ${role.name} to ${member.displayName}`) })
     })
     setTimeout(() => {
       action.rolesToRemove.forEach(roleId => {
         const role = member.guild.roles.cache.get(roleId)
         member.roles.remove(role)
-          .catch(() => { sendMessage(inviteLogChannel, `Failed to remove role ${role.name} from ${member.displayName}`) })
+          .catch(() => { sendMessage(logChannel, `Failed to remove role ${role.name} from ${member.displayName}`) })
       })
     }, 2000)
     const stats = getStats(action)
@@ -130,7 +130,7 @@ client.on('guildMemberAdd', async member => {
     return action
   })
   await serverSettingsDB.put(serverConfig)
-  if (actions.length > 0) sendEmbeds(inviteLogChannel, embeds)
+  if (actions.length > 0) sendEmbeds(logChannel, embeds)
 })
 
 // Message Scanner
