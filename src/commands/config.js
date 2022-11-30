@@ -37,33 +37,34 @@ async function setLog (interaction, client) {
     ephemeral: channel && !channel.id
   })
 }
-async function toggleFeature (interaction, client) {
-  const serverConfig = await serverSettingsDB.get(interaction.guild.id)
-  const subcommand = interaction.options.getSubcommand()
-  const featureName = subcommand.replace(/-\w/g, m0 => m0[1].toUpperCase())
-  const isEnabled = interaction.options.getBoolean('enabled')
-  if (isEnabled == null) {
-    // If left empty, perform a read instead of a write for the setting
-    interaction.reply({
-      embeds: [{
-        title: 'Config',
-        description: `${subcommand} is currently ${serverConfig.enabledFeatures[featureName] ? 'enabled' : 'disabled'}`,
-        color: 0x0088ff
-      }]
-    })
-    return
-  }
-  if (!serverConfig.enabledFeatures) serverConfig.enabledFeatures = {}
-  serverConfig.enabledFeatures[featureName] = isEnabled
-  await serverSettingsDB.put(serverConfig)
-  interaction.reply({
-    embeds: [{
-      title: 'Success',
-      description: `Successfully ${isEnabled ? 'enabled' : 'disabled'} ${subcommand}`,
-      color: 0x00ff00
-    }]
-  })
-}
+
+// async function toggleFeature (interaction, client) {
+//   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
+//   const subcommand = interaction.options.getSubcommand()
+//   const featureName = subcommand.replace(/-\w/g, m0 => m0[1].toUpperCase())
+//   const isEnabled = interaction.options.getBoolean('enabled')
+//   if (isEnabled == null) {
+//     // If left empty, perform a read instead of a write for the setting
+//     interaction.reply({
+//       embeds: [{
+//         title: 'Config',
+//         description: `${subcommand} is currently ${serverConfig.enabledFeatures[featureName] ? 'enabled' : 'disabled'}`,
+//         color: 0x0088ff
+//       }]
+//     })
+//     return
+//   }
+//   if (!serverConfig.enabledFeatures) serverConfig.enabledFeatures = {}
+//   serverConfig.enabledFeatures[featureName] = isEnabled
+//   await serverSettingsDB.put(serverConfig)
+//   interaction.reply({
+//     embeds: [{
+//       title: 'Success',
+//       description: `Successfully ${isEnabled ? 'enabled' : 'disabled'} ${subcommand}`,
+//       color: 0x00ff00
+//     }]
+//   })
+// }
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -77,21 +78,22 @@ module.exports = {
           .addChannelTypes(ChannelType.GuildText)
         )
       return subcommand
-    })
-    .addSubcommand(subcommand => {
-      subcommand.setName('link-scanner').setDescription('Configure automatic malware and scam link removal')
-        .addBooleanOption(option => option
-          .setName('enabled')
-          .setDescription('Whether to enable automatic malware and scam link removal')
-        )
-      return subcommand
     }),
+  // .addSubcommand(subcommand => {
+  //   subcommand.setName('link-scanner').setDescription('Configure automatic malware and scam link removal')
+  //     .addBooleanOption(option => option
+  //       .setName('enabled')
+  //       .setDescription('Whether to enable automatic malware and scam link removal')
+  //     )
+  //   return subcommand
+  // }),
+  /** @todo remove commented code once new system works */
   userPermissions: ['ADMINISTRATOR'],
   defaultMemberPermissions: 8,
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
       case 'log': return setLog(interaction, client)
-      case 'link-scanner': return toggleFeature(interaction, client)
+      // case 'link-scanner': return toggleFeature(interaction, client)
     }
   }
 }

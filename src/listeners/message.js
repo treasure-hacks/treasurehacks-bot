@@ -11,7 +11,12 @@ module.exports = function (client) {
     // Ignore messages sent by bots
     if (!message.member || message.member.user.bot) return
     const serverConfig = await serverSettingsDB.get(message.guild.id)
-    if (!serverConfig.enabledFeatures?.linkScanner) return
+    if (!serverConfig.linkScanner?.enabled) return
+
+    const logOnlyRoles = serverConfig.linkScanner?.ignoredRoles || []
+    const actionableUser = !logOnlyRoles.some(id => {
+      return message.member.roles.cache.map(r => r.id).includes(id)
+    })
 
     const channels = await message.guild.channels.fetch()
     const logChannel = channels.get(serverConfig.logChannel)
@@ -37,13 +42,13 @@ module.exports = function (client) {
       const actions = []
       /* eslint-disable no-fallthrough */
       switch (true) {
-        case riskScore >= 85: // Longer Timeout, Delete, respond, log
+        case actionableUser && riskScore >= 85: // Longer Timeout, Delete, respond, log
           timeoutHours = 48
-        case riskScore >= 75: // Timeout, Delete, respond, log
+        case actionableUser && riskScore >= 75: // Timeout, Delete, respond, log
           message.member.timeout(timeoutHours * 3600 * 1000, 'Posting harmful links')
             .catch(e => console.error('Cannot timeout user', e))
           actions.push('timeout user')
-        case riskScore >= 50: {
+        case actionableUser && riskScore >= 50: {
           // Delete, respond, log
           if (!postDeleted && message.deletable) {
             postDeleted = true
