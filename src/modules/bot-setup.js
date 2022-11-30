@@ -1,16 +1,16 @@
 const fs = require('fs')
 
-const { Client, Intents, Collection } = require('discord.js')
+const { Client, GatewayIntentBits, Collection } = require('discord.js')
 const client = new Client({
   intents: [
-    Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MESSAGES,
-    Intents.FLAGS.GUILD_MEMBERS,
-    Intents.FLAGS.GUILD_INVITES
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildInvites
   ]
 }) // Connect to our discord bot
 const { REST } = require('@discordjs/rest')
-const { Routes } = require('discord-api-types/v9')
+const { Routes } = require('discord-api-types/v10')
 let commands = new Collection() // Where the bot (slash) commands will be stored
 const commandPermssions = {}
 const token = process.env.DISCORD_TOKEN
