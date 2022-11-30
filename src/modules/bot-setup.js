@@ -1,6 +1,7 @@
 const fs = require('fs')
-
 const { Client, GatewayIntentBits, Collection } = require('discord.js')
+// eslint-disable-next-line no-unused-vars
+const { BaseInteraction, ButtonInteraction } = require('discord.js')
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -12,6 +13,7 @@ const client = new Client({
 const { REST } = require('@discordjs/rest')
 const { Routes } = require('discord-api-types/v10')
 let commands = new Collection() // Where the bot (slash) commands will be stored
+const buttonActions = new Collection() // Where button actions will be stored
 const commandPermssions = {}
 const token = process.env.DISCORD_TOKEN
 const rest = new REST({ version: '9' }).setToken(token)
@@ -52,6 +54,22 @@ async function registerSlashCommands () {
     return { success: false, error, request: body }
   }
 }
+
+async function initButtonActions () {
+  const actionFiles = fs
+    .readdirSync('src/button-actions')
+    .filter(file => file.endsWith('.js')) // Get and filter all the files in the "Commands" Folder.
+
+  // Loop through the command files
+  for (const file of actionFiles) {
+    const fileActions = require(`../button-actions/${file}`) // Get and define the command file.
+    fileActions.forEach(action => {
+      buttonActions.set(action.name, action.handler) // Set the command name and file for handler to use.
+    })
+  }
+}
+initButtonActions()
+
 async function respondToCommand (interaction) {
   const command = commands.get(interaction.commandName)
   if (!command) return
@@ -67,4 +85,23 @@ async function respondToCommand (interaction) {
   }
 }
 
-module.exports = { client, token, registerSlashCommands, respondToCommand }
+/**
+ * Responds to the button interaction
+ * @param {ButtonInteraction} interaction The button interaction
+ * @param {*} client The Discord bot client
+ */
+async function respondToButton (interaction, client) {
+  const handler = buttonActions.get(interaction.customId)
+  handler(interaction, client)
+}
+
+/**
+ * Responds to the user interaction with the bot
+ * @param {BaseInteraction} interaction The interaction with the bot
+ */
+async function respondToInteraction (interaction) {
+  if (interaction.isButton()) return respondToButton(interaction)
+  if (interaction.isCommand()) return respondToCommand(interaction)
+}
+
+module.exports = { client, token, registerSlashCommands, respondToInteraction }

@@ -13,7 +13,7 @@ const fs = require('fs')
 const { Collection } = require('discord.js')
 
 // Treasure Hacks Bot Setup
-const { client, token, registerSlashCommands, respondToCommand } = require('./modules/bot-setup.js')
+const { client, token, registerSlashCommands, respondToInteraction } = require('./modules/bot-setup.js')
 
 const enabledByDefault = {
   linkScanner: true
@@ -71,9 +71,7 @@ client.once('ready', async () => {
   loadInvites()
 })
 client.on('interactionCreate', async interaction => {
-  // Command handler
-  if (!interaction.isCommand()) return
-  respondToCommand(interaction)
+  respondToInteraction(interaction)
 })
 client.on('guildMemberAdd', async member => {
   const serverConfig = await serverSettingsDB.get(member.guild.id)
