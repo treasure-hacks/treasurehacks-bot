@@ -62,7 +62,7 @@ async function approveRequest (interaction) {
     fields.find(f => f.name === 'Reason').value
   }`)
   fields.push({ name: 'Channel', value: `<#${channel.id}>`, inline: true })
-  embed.color = 0x00ff00
+  embed.data.color = 0x00ff00
   interaction.message.edit({
     content: 'This channel creation request has been addressed',
     embeds: interaction.message.embeds,
@@ -78,7 +78,7 @@ function denyRequest (interaction) {
   if (deleteIfNoData(interaction)) return
   const embed = interaction.message.embeds[0]
   embed.fields.push({ name: 'Status', value: 'Rejected', inline: true })
-  embed.color = 0xff0000
+  embed.data.color = 0xff0000
   interaction.message.edit({
     content: 'This channel creation request has been addressed',
     embeds: interaction.message.embeds,
