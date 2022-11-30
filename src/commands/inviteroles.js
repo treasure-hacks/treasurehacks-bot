@@ -10,8 +10,8 @@ function getChannelsAndRoles (interaction) {
   const removeRoles = interaction.options.getString('remove-roles')?.split(' ') || []
 
   if (channels.some(c => !c.match(/^<#\d+>$/))) return { error: 'Channels are not formatted properly. Please enter channel names, separated by spaces. ie `#welcome #general`' }
-  if (roles.some(c => !c.match(/^<@&\d+>$/))) return { error: 'Roles are not formatted properly. Please enter channel names, separated by spaces. ie `@Group @Lobby`' }
-  if (removeRoles.some(c => !c.match(/^<@&\d+>$/))) return { error: 'Roles are not formatted properly. Please enter channel names, separated by spaces. ie `@Group @Lobby`' }
+  if (roles.some(c => !c.match(/^<@&\d+>$/))) return { error: 'Roles are not formatted properly. Please enter role names, separated by spaces. ie `@Group @Lobby`' }
+  if (removeRoles.some(c => !c.match(/^<@&\d+>$/))) return { error: 'Roles are not formatted properly. Please enter role names, separated by spaces. ie `@Group @Lobby`' }
 
   function isValidRole (role) {
     return !role.managed && role.name !== '@everyone'

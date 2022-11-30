@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders')
 const { ChannelType } = require('discord-api-types/v9')
-const { Permissions } = require('discord.js')
+const { PermissionsBitField } = require('discord.js')
 
 function clearCategory (interaction, client) {
   const guild = interaction.guild
@@ -74,18 +74,19 @@ async function teamCategory (interaction, client) {
   // return interaction.reply(JSON.stringify(teams.map(x => x.map(m => { return { id: m.id, u: m.displayName } }))))
 
   async function createChannel (name, type, team) {
-    return await interaction.guild.channels.create(name, {
+    return await interaction.guild.channels.create({
+      name,
       type,
       parent: category.id,
       permissionOverwrites: [
         {
           id: interaction.guild.id, // @everyone
-          deny: [Permissions.FLAGS.VIEW_CHANNEL]
+          deny: [PermissionsBitField.Flags.ViewChannel]
         },
         ...team.map(user => {
           return {
             id: user.id,
-            allow: [Permissions.FLAGS.VIEW_CHANNEL]
+            allow: [PermissionsBitField.Flags.ViewChannel]
           }
         })
       ]
@@ -93,8 +94,8 @@ async function teamCategory (interaction, client) {
   }
   teams.forEach(async (team, index) => {
     index += 1
-    if (channelType !== 'voice') await createChannel('team-' + index, 'GUILD_TEXT', team)
-    if (channelType !== 'text') await createChannel('team-' + index, 'GUILD_VOICE', team)
+    if (channelType !== 'voice') await createChannel('team-' + index, ChannelType.GuildText, team)
+    if (channelType !== 'text') await createChannel('team-' + index, ChannelType.GuildVoice, team)
   })
   const readableType = ({
     text: 'Text',
