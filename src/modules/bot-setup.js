@@ -16,7 +16,7 @@ let commands = new Collection() // Where the bot (slash) commands will be stored
 const buttonActions = new Collection() // Where button actions will be stored
 const commandPermssions = {}
 const token = process.env.DISCORD_TOKEN
-const rest = new REST({ version: '9' }).setToken(token)
+const rest = new REST({ version: '10' }).setToken(token)
 
 async function registerSlashCommands () {
   commands = new Collection()

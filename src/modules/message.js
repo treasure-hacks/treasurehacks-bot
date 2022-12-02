@@ -1,4 +1,4 @@
-const { MessageEmbed } = require('discord.js')
+const { EmbedBuilder } = require('discord.js')
 
 function sendMessage (channel, data) {
   if (!channel) return
@@ -9,7 +9,7 @@ function sendMessage (channel, data) {
 function sendEmbeds (channel, embedConfigs) {
   if (!channel) return
   const embeds = embedConfigs.map(config => {
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setColor(config.color)
       .setTitle(config.title)
       .setAuthor(config.author)
