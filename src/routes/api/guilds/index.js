@@ -5,7 +5,7 @@ const router = express.Router()
 const { validateAPIKey } = require('../../../modules/api-key-validation')
 
 router.get('/:guild/user-ids', validateAPIKey, async (req, res) => {
-  if (!/^([^#]+#\d{4}(,|$))+/.test(req.query.users)) {
+  if (req.query.users == null || !/^([^#]+#\d{4}(,|$))*/.test(req.query.users)) {
     return res.status(400).send({ error: 'Users not specified correctly' })
   }
   const usernames = req.query.users.split(',')
