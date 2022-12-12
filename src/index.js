@@ -160,7 +160,7 @@ function recursiveRoutes (folderName) {
 recursiveRoutes('src/routes')
 
 site.use((req, res) => {
-  res.send('404 Page not found')
+  res.status(404).send('404 Page not found')
 })
 const http = require('http')
 const server = http.Server(site)

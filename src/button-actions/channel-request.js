@@ -6,6 +6,36 @@ const { sendMessage } = require('../modules/message')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 
+function clearChannelRequestButtons (components) {
+  return components.filter(c => {
+    if (c.type === 1) c.components = clearChannelRequestButtons(c.components)
+    return !c.data?.custom_id?.includes('btn_channel_request_')
+  })
+}
+
+async function editMessageIfNeeded (message, color) {
+  const embed = message.embeds[0]
+  const newComponents = clearChannelRequestButtons(message.components)
+  console.log(newComponents)
+
+  // There's other components in this bot message; only remove the action button
+  if (newComponents.length > 0) {
+    await message.edit({
+      embeds: message.embeds,
+      components: newComponents
+    })
+    return false
+  }
+
+  embed.data.color = color
+  await message.edit({
+    content: 'This channel creation request has been addressed',
+    embeds: message.embeds,
+    components: newComponents
+  })
+  return true
+}
+
 /**
  * Deletes an interaction's source if there's no data associated with it
  * @param {ButtonInteraction} interaction The interaction
@@ -31,6 +61,9 @@ async function approveRequest (interaction) {
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
   const embed = interaction.message.embeds[0]
   const fields = embed.fields
+
+  // Refresh users
+  await interaction.guild.members.fetch()
 
   const membersField = fields.find(f => f.name === 'Members')
   const team = membersField.value.split(', ').map(mention => {
@@ -58,32 +91,27 @@ async function approveRequest (interaction) {
       })
     ]
   })
-  sendMessage(channel, `Created From Private Channel Request\n**Reason:** ${
-    fields.find(f => f.name === 'Reason').value
-  }`)
+  const reasonField = fields.find(f => f.name === 'Reason')
+  if (reasonField) {
+    sendMessage(channel, `Created From Private Channel Request\n**Reason:** ${
+      reasonField.value
+    }`)
+  }
   fields.push({ name: 'Channel', value: `<#${channel.id}>`, inline: true })
-  embed.data.color = 0x00ff00
-  interaction.message.edit({
-    content: 'This channel creation request has been addressed',
-    embeds: interaction.message.embeds,
-    components: []
-  })
+  const edited = await editMessageIfNeeded(interaction.message, 0x00ff00)
+  if (!edited) interaction.deferUpdate()
 }
 
 /**
  * Denies a channel creation request
  * @param {ButtonInteraction} interaction The Discord bot's button interaction
- */
-function denyRequest (interaction) {
+*/
+async function denyRequest (interaction) {
   if (deleteIfNoData(interaction)) return
   const embed = interaction.message.embeds[0]
   embed.fields.push({ name: 'Status', value: 'Rejected', inline: true })
-  embed.data.color = 0xff0000
-  interaction.message.edit({
-    content: 'This channel creation request has been addressed',
-    embeds: interaction.message.embeds,
-    components: []
-  })
+  const edited = await editMessageIfNeeded(interaction.message, 0xff0000)
+  if (!edited) interaction.deferUpdate()
 }
 
 module.exports = [

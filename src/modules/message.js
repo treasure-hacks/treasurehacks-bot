@@ -6,6 +6,12 @@ function sendMessage (channel, data) {
     .then(message => console.log(`Sent message: ${message.content}`))
     .catch(console.error)
 }
+
+async function sendMessageAsync (channel, data) {
+  if (!channel) return
+  return await channel.send(data)
+}
+
 function sendEmbeds (channel, embedConfigs) {
   if (!channel) return
   const embeds = embedConfigs.map(config => {
@@ -27,4 +33,4 @@ function sendEmbeds (channel, embedConfigs) {
   channel.send({ embeds })
 }
 
-module.exports = { sendMessage, sendEmbeds }
+module.exports = { sendMessage, sendMessageAsync, sendEmbeds }
