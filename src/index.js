@@ -138,9 +138,30 @@ client.login(token)
 
 const PORT = process.env.PORT
 const express = require('express')
+const cors = require('cors')
 const site = express()
 site.use(express.json({ extended: true, limit: '5mb' }))
 site.use(express.urlencoded({ extended: true }))
+
+const whitelist = process.env.CORS_ORIGINS.split(', ')
+function wildcard (origin, root) {
+  if (!origin) return null
+  const host = new URL(origin).host
+  return origin.replace(host, '') + host.replace(/^\w+/, root ? '*.$&' : '*')
+}
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1 ||
+      whitelist.includes(wildcard(origin)) || whitelist.includes(wildcard(origin, true))
+    ) {
+      callback(null, true)
+    } else {
+      callback(null, false)
+    }
+  },
+  optionsSuccessStatus: 200
+}
+site.use(cors(corsOptions))
 
 // Application web-accessible "API" routes
 function recursiveRoutes (folderName) {
