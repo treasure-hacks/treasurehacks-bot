@@ -13,6 +13,31 @@ const { validateAPIKey } = require('../../../modules/api-key-validation')
  * @param {express.Response} res The response
  * @param {String} guildId The Guild ID
  * @param {String} channelId The channel ID
+ * @param {String} messageId The message ID
+ */
+async function getMessage (req, res, guildId, channelId, messageId) {
+  const guilds = await client.guilds.fetch()
+  const guild = await guilds.get(guildId)?.fetch()
+  if (!guild) {
+    res.status(404).send({ error: 'Bot is not in this guild' })
+    return false
+  }
+  const channel = await guild.channels.fetch(channelId)
+  if (!channel) {
+    res.status(404).send({ error: 'This channel does not exist or the bot cannot access it' })
+    return false
+  }
+  const message = await channel.messages.fetch(messageId).catch(() => {})
+  if (!message) res.status(404).send({ error: 'Message not found' })
+  return message
+}
+
+/**
+ * Creates or edits a bot message
+ * @param {express.Request} req The request
+ * @param {express.Response} res The response
+ * @param {String} guildId The Guild ID
+ * @param {String} channelId The channel ID
  * @param {Object} message The message content
  * @param {String} messageId The message ID
  */
@@ -46,6 +71,13 @@ async function putMessage (req, res, guildId, channelId, message, messageId = un
     res.send({ error: e.message })
   }
 }
+
+router.get('/:guild/:channel/:id', validateAPIKey, async (req, res) => {
+  const { guild, channel, id: messageId } = req.params
+  const message = await getMessage(req, res, guild, channel, messageId)
+  if (!message) return
+  res.send(message)
+})
 
 router.post('/post', validateAPIKey, async (req, res) => {
   const isValid = validateBody(req, res, {
