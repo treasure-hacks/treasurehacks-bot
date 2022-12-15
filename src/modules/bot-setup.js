@@ -90,7 +90,22 @@ async function respondToCommand (interaction) {
  */
 async function respondToButton (interaction, client) {
   const handler = buttonActions.get(interaction.customId)
-  handler(interaction, client)
+  if (!handler) {
+    return interaction.reply({
+      content: 'There is no event handler for this button',
+      ephemeral: true
+    })
+  }
+
+  try {
+    await handler(interaction, client)
+  } catch (error) {
+    console.error(error)
+    return interaction.reply({
+      content: 'There was an error while executing this command!',
+      ephemeral: true
+    })
+  }
 }
 
 /**
