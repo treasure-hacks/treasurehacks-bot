@@ -1,3 +1,4 @@
+/** @todo come up with a better name for this (this gets readable stats from invite roles) */
 function getStats (rule) {
   function relativeTime (oldTime) {
     const difference = Math.round((Date.now() - oldTime) / 1000)
