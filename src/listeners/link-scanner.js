@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { Message } = require('discord.js')
+const { Message, Events } = require('discord.js')
 const axios = require('axios')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
@@ -82,4 +82,4 @@ async function scanMessage (message) {
   })
 }
 
-client.on('messageCreate', scanMessage)
+client.on(Events.MessageCreate, scanMessage)

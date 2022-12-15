@@ -1,3 +1,4 @@
+const { Events } = require('discord.js')
 const { client } = require('../modules/bot-setup')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
@@ -38,5 +39,5 @@ async function createServerConfigs () {
   guilds.forEach(createServerConfig)
 }
 
-client.once('ready', createServerConfigs)
-client.on('guildCreate', createServerConfig)
+client.once(Events.ClientReady, createServerConfigs)
+client.on(Events.GuildCreate, createServerConfig)

@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { Collection, Guild, Client, Invite } = require('discord.js')
+const { Collection, GuildMember, Events } = require('discord.js')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
@@ -28,26 +28,30 @@ function updateGuildInvites (guild) {
   })
 }
 
-client.on('inviteDelete', (invite) => {
+client.on(Events.InviteDelete, (invite) => {
   // Delete the Invite from Cache
   invites.get(invite.guild.id).delete(invite.code)
 })
 
-client.on('inviteCreate', (invite) => {
+client.on(Events.InviteCreate, (invite) => {
   // Update cache on new invites
   invites.get(invite.guild.id).set(invite.code, invite.uses)
 })
 
-client.on('guildCreate', async (guild) => {
+client.on(Events.GuildCreate, async (guild) => {
   // We've been added to a new Guild. Let's fetch all the invites, and save it to our cache
   updateGuildInvites(guild)
 })
 
-client.on('guildDelete', (guild) => {
+client.on(Events.GuildDelete, (guild) => {
   // We've been removed from a Guild. Let's delete all their invites
   invites.delete(guild.id)
 })
 
+/**
+ * Adds invite roles to a new server member
+ * @param {GuildMember} member The member to add invite roles to
+ */
 async function addInviteRolesToNewMember (member) {
   const serverConfig = await serverSettingsDB.get(member.guild.id)
 
@@ -110,5 +114,5 @@ async function addInviteRolesToNewMember (member) {
   if (actions.length > 0) sendMessage(logChannel, { embeds })
 }
 
-client.once('ready', loadInvites)
-client.on('guildMemberAdd', addInviteRolesToNewMember)
+client.once(Events.ClientReady, loadInvites)
+client.on(Events.GuildMemberAdd, addInviteRolesToNewMember)
