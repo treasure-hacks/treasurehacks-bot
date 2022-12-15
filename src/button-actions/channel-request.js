@@ -9,14 +9,15 @@ const serverSettingsDB = deta.Base('server-settings')
 function clearChannelRequestButtons (components) {
   return components.filter(c => {
     if (c.type === 1) c.components = clearChannelRequestButtons(c.components)
-    return !c.data?.custom_id?.includes('btn_channel_request_')
+    const isChannelRequestHandler = c.data?.custom_id?.includes('btn_channel_request_')
+    const isEmptyComponentRow = c.type === 1 && !c.components.length
+    return !isChannelRequestHandler && !isEmptyComponentRow
   })
 }
 
 async function editMessageIfNeeded (message, color) {
   const embed = message.embeds[0]
   const newComponents = clearChannelRequestButtons(message.components)
-  console.log(newComponents)
 
   // There's other components in this bot message; only remove the action button
   if (newComponents.length > 0) {
