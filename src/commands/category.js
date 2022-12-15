@@ -1,6 +1,4 @@
-const { SlashCommandBuilder } = require('@discordjs/builders')
-const { ChannelType } = require('discord-api-types/v9')
-const { PermissionsBitField } = require('discord.js')
+const { PermissionsBitField, ChannelType, SlashCommandBuilder } = require('discord.js')
 
 function clearCategory (interaction, client) {
   const guild = interaction.guild

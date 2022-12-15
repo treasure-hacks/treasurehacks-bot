@@ -1,7 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { ChatInputCommandInteraction } = require('discord.js')
-const { SlashCommandBuilder } = require('@discordjs/builders')
-const { ChannelType } = require('discord-api-types/v9')
+const { ChatInputCommandInteraction, ChannelType, SlashCommandBuilder } = require('discord.js')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')

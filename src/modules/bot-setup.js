@@ -1,5 +1,5 @@
 const fs = require('fs')
-const { Client, GatewayIntentBits, Collection } = require('discord.js')
+const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js')
 // eslint-disable-next-line no-unused-vars
 const { BaseInteraction, ButtonInteraction } = require('discord.js')
 const client = new Client({
@@ -10,8 +10,6 @@ const client = new Client({
     GatewayIntentBits.GuildInvites
   ]
 }) // Connect to our discord bot
-const { REST } = require('@discordjs/rest')
-const { Routes } = require('discord-api-types/v10')
 let commands = new Collection() // Where the bot (slash) commands will be stored
 const buttonActions = new Collection() // Where button actions will be stored
 const commandPermssions = {}
@@ -88,7 +86,7 @@ async function respondToCommand (interaction) {
 /**
  * Responds to the button interaction
  * @param {ButtonInteraction} interaction The button interaction
- * @param {*} client The Discord bot client
+ * @param {Client} client The Discord bot client
  */
 async function respondToButton (interaction, client) {
   const handler = buttonActions.get(interaction.customId)

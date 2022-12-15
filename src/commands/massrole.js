@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('@discordjs/builders')
+const { SlashCommandBuilder } = require('discord.js')
 
 async function clearRole (interaction, client, sourceProperty) {
   const role = interaction.options.getRole(sourceProperty)
