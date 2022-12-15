@@ -1,10 +1,15 @@
-const { SlashCommandBuilder } = require('discord.js')
+// eslint-disable-next-line no-unused-vars
+const { Client, ChatInputCommandInteraction, SlashCommandBuilder } = require('discord.js')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 
 const defaultServerConfig = { enabled: false, ignoredRoles: [] }
 
+/**
+ * Gets the specified roles from the slash command options
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ */
 function getRolesFromOptions (interaction) {
   const addRoles = interaction.options.getString('add')?.split(' ') || []
   const removeRoles = interaction.options.getString('remove')?.split(' ') || []
@@ -38,6 +43,12 @@ function getRolesFromOptions (interaction) {
   return serverData
 }
 
+/**
+ * Enables or disables the link scanner
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ * @param {Boolean} enabled Whether the link scanner should be enabled
+ */
 async function setScannerStatus (interaction, client, enabled) {
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
   if (!serverConfig.linkScanner) serverConfig.linkScanner = defaultServerConfig
@@ -52,7 +63,11 @@ async function setScannerStatus (interaction, client, enabled) {
     }]
   })
 }
-
+/**
+ * Updates which roles should be ignored by the link scanner
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function updateIgnoredRoles (interaction, client) {
   const { addRoles, removeRoles, setRoles, error } = getRolesFromOptions(interaction)
   if (error) {
@@ -101,6 +116,11 @@ async function updateIgnoredRoles (interaction, client) {
   })
 }
 
+/**
+ * Replies with the status of the link scanner
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function replyWithStatus (interaction, client) {
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
   const enabled = serverConfig.linkScanner?.enabled

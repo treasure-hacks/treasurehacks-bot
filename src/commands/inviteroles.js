@@ -1,9 +1,14 @@
-const { SlashCommandBuilder } = require('discord.js')
+// eslint-disable-next-line no-unused-vars
+const { Client, ChatInputCommandInteraction, SlashCommandBuilder } = require('discord.js')
 const { Deta } = require('deta')
 const { getStats } = require('../modules/role-stats')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 
+/**
+ * Gets the channels and roles from the slash command interaction options
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ */
 function getChannelsAndRoles (interaction) {
   const channels = interaction.options.getString('channels')?.split(' ') || []
   const roles = interaction.options.getString('add-roles')?.split(' ') || []
@@ -37,6 +42,11 @@ function getChannelsAndRoles (interaction) {
 
   return serverData
 }
+
+/**
+ * Gets a color from the slash command interaction options
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ */
 function getColorFromOptions (interaction) {
   const color = interaction.options.getString('color') || undefined
   if (!color) return { color: undefined }
@@ -49,6 +59,11 @@ function getColorFromOptions (interaction) {
   return { color: role.color }
 }
 
+/**
+ * Adds a rule to manage invite roles
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function addInviteRule (interaction, client, isUpdate, override) {
   const name = interaction.options.getString('name')
   const description = interaction.options.getString('description') || undefined
@@ -172,6 +187,12 @@ async function addInviteRule (interaction, client, isUpdate, override) {
   serverSettingsDB.put(serverConfig)
   interaction.reply(replyContent)
 }
+
+/**
+ * Lists the existing rules for invite roles
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function listInviteRoles (interaction, client) {
   const name = interaction.options.getString('name')
   const listAll = name == null
@@ -208,6 +229,12 @@ async function listInviteRoles (interaction, client) {
     ephemeral: !embeds.length
   })
 }
+
+/**
+ * Lists the invites that will give people a role upon joining
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function listTargetedInvites (interaction, client) {
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
   const serverInvites = await interaction.guild.invites.fetch()
@@ -251,6 +278,12 @@ async function listTargetedInvites (interaction, client) {
     // ephemeral: true
   })
 }
+
+/**
+ * Removes a rule that manages invite roles
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function removeInviteRule (interaction, client) {
   const name = interaction.options.getString('name')
   const [removeDescription, removeColor] = [interaction.options.getBoolean('description'), interaction.options.getBoolean('color')]
@@ -342,6 +375,12 @@ async function removeInviteRule (interaction, client) {
 
   interaction.reply(replyContent)
 }
+
+/**
+ * Renames a rule for managing invite roles
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function renameInviteRule (interaction, client) {
   const name = interaction.options.getString('name')
   const newName = interaction.options.getString('new')

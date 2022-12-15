@@ -1,5 +1,11 @@
-const { SlashCommandBuilder } = require('discord.js')
+// eslint-disable-next-line no-unused-vars
+const { Client, ChatInputCommandInteraction, SlashCommandBuilder } = require('discord.js')
 
+/**
+ * Clears a role
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function clearRole (interaction, client, sourceProperty) {
   const role = interaction.options.getRole(sourceProperty)
   if (!role) {
@@ -27,6 +33,12 @@ async function clearRole (interaction, client, sourceProperty) {
     embeds: [embed]
   })
 }
+
+/**
+ * Adds all users in one role to another role
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function siphonRole (interaction, client) {
   const clear = interaction.options.getBoolean('clear')
   const source = interaction.options.getRole('source')

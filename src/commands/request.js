@@ -1,6 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { ChatInputCommandInteraction } = require('discord.js')
-const { SlashCommandBuilder } = require('discord.js')
+const { ChatInputCommandInteraction, SlashCommandBuilder, Client } = require('discord.js')
 const { Deta } = require('deta')
 const { sendMessage } = require('../modules/message')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
@@ -9,7 +8,7 @@ const serverSettingsDB = deta.Base('server-settings')
 /**
  * Gets the feature config reply for the current feature
  * @param {ChatInputCommandInteraction} interaction The interaction created by the user
- * @param {*} client The bot client
+ * @param {Client} client The bot client
  */
 async function makeChannelRequest (interaction, client) {
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)

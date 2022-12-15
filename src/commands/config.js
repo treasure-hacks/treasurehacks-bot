@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { ChatInputCommandInteraction, ChannelType, SlashCommandBuilder } = require('discord.js')
+const { Client, ChatInputCommandInteraction, ChannelType, SlashCommandBuilder } = require('discord.js')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
@@ -8,6 +8,11 @@ function dashedToCamelCase (str) {
   return str.replace(/-\w/g, m0 => m0[1].toUpperCase())
 }
 
+/**
+ * Sets the log channel
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function setLog (interaction, client) {
   const channel = interaction.options.getChannel('channel')
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
@@ -42,6 +47,11 @@ async function setLog (interaction, client) {
   })
 }
 
+/**
+ * Sets the alert channel
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function setAlerts (interaction, client) {
   const channel = interaction.options.getChannel('channel')
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
@@ -79,7 +89,7 @@ async function setAlerts (interaction, client) {
 /**
  * Gets the feature config reply for the current feature
  * @param {ChatInputCommandInteraction} interaction The interaction created by the user
- * @param {*} client The bot client
+ * @param {Client} client The bot client
  * @param {Object} config The server configuration
  * @returns {Object} The Discord reply object
  */
@@ -139,7 +149,7 @@ async function getFeatureConfig (interaction, client, config) {
 /**
  * Updates the configuration for a feature
  * @param {ChatInputCommandInteraction} interaction The interaction created by the user
- * @param {*} client The bot client
+ * @param {Client} client The bot client
  */
 async function updateFeatureConfig (interaction, client) {
   const subcommand = interaction.options.getSubcommand()

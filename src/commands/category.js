@@ -1,5 +1,11 @@
-const { PermissionsBitField, ChannelType, SlashCommandBuilder } = require('discord.js')
+// eslint-disable-next-line no-unused-vars
+const { Client, ChatInputCommandInteraction, PermissionsBitField, ChannelType, SlashCommandBuilder } = require('discord.js')
 
+/**
+ * Clears a category
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 function clearCategory (interaction, client) {
   const guild = interaction.guild
   const category = interaction.options.getChannel('category')
@@ -19,6 +25,11 @@ function clearCategory (interaction, client) {
   if (deleteParent) category.delete()
 }
 
+/**
+ * Syncs permissions of all channels to a category's permissions
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 function syncCategory (interaction, client) {
   const guild = interaction.guild
   const category = interaction.options.getChannel('category')
@@ -40,6 +51,11 @@ function syncCategory (interaction, client) {
   if (deleteParent) category.delete()
 }
 
+/**
+ * Creates a channel for every "team" within a participating role
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
 async function teamCategory (interaction, client) {
   const category = interaction.options.getChannel('category')
   const role = interaction.options.getRole('role')
