@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { Client, ChatInputCommandInteraction, SlashCommandBuilder } = require('discord.js')
+const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
 const { Deta } = require('deta')
 const { getStats } = require('../modules/role-stats')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
@@ -433,6 +433,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('inviteroles')
     .setDescription('Manage roles that are automatically added with invites to certain channels')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand(subcommand => {
       subcommand.setName('add').setDescription('Add a new role given to people invited to a certain channel')
       addUpdateCommandOptions(subcommand, true)
@@ -477,8 +478,6 @@ module.exports = {
       addUpdateCommandOptions(subcommand, false)
       return subcommand
     }),
-  userPermissions: ['ADMINISTRATOR'],
-  defaultMemberPermissions: 8,
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
       case 'add': return addInviteRule(interaction, client, false, false)

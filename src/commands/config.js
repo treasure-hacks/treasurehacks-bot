@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { Client, ChatInputCommandInteraction, ChannelType, SlashCommandBuilder } = require('discord.js')
+const { Client, ChatInputCommandInteraction, ChannelType, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
@@ -180,6 +180,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('config')
     .setDescription('Configure settings related to the Treasure Hacks Bot')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand(subcommand => {
       subcommand.setName('log').setDescription('Specifies which channel should be used to log info')
         .addChannelOption(option => option
@@ -211,8 +212,6 @@ module.exports = {
         )
       return subcommand
     }),
-  userPermissions: ['ADMINISTRATOR'],
-  defaultMemberPermissions: 8,
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
       case 'log': return setLog(interaction, client)

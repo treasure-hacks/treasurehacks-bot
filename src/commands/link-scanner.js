@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { Client, ChatInputCommandInteraction, SlashCommandBuilder } = require('discord.js')
+const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
@@ -140,6 +140,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('link-scanner')
     .setDescription('Automatically remove links that contain malware and scam links')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand(subcommand => {
       subcommand.setName('enable').setDescription('Enables the link scanner')
       return subcommand
@@ -168,8 +169,6 @@ module.exports = {
         )
       return subcommand
     }),
-  userPermissions: ['ADMINISTRATOR'],
-  defaultMemberPermissions: 8,
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
       case 'enable': return setScannerStatus(interaction, client, true)

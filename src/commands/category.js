@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { Client, ChatInputCommandInteraction, PermissionsBitField, ChannelType, SlashCommandBuilder } = require('discord.js')
+const { Client, ChatInputCommandInteraction, PermissionsBitField, ChannelType, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
 
 /**
  * Clears a category
@@ -132,6 +132,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('category')
     .setDescription('Manage categories faster than ever before')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand(subcommand => {
       subcommand.setName('clear').setDescription('Removes all channels from a certain category')
         .addChannelOption(option => option
@@ -181,8 +182,6 @@ module.exports = {
         )
       return subcommand
     }),
-  userPermissions: ['ADMINISTRATOR'],
-  defaultMemberPermissions: 8,
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
       case 'clear': return clearCategory(interaction, client)

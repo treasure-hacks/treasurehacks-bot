@@ -26,15 +26,6 @@ async function registerSlashCommands () {
   // Loop through the command files
   for (const file of commandFiles) {
     const command = require(`../commands/${file}`) // Get and define the command file.
-    if (command.userPermissions) {
-      command.data.defaultPermission = false
-      command.data.defaultMemberPermissions = command.defaultMemberPermissions
-      command.data.userPermissions = command.userPermissions
-    } else {
-      command.data.defaultPermission = true
-      command.data.defaultMemberPermissions = true
-      command.data.userPermissions = []
-    }
     commands.set(command.data.name, command) // Set the command name and file for handler to use.
     commandArray.push(command.data.toJSON()) // Push the command data to an array (for sending to the API).
     commandPermssions[command.data.name] = command.userPermissions || []

@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { Client, ChatInputCommandInteraction, SlashCommandBuilder } = require('discord.js')
+const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
 
 /**
  * Clears a role
@@ -76,6 +76,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('role')
     .setDescription('Mass-manage roles within the server')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand(subcommand => {
       subcommand.setName('clear').setDescription('Removes all members from a certain role')
         .addRoleOption(option => option
@@ -103,8 +104,6 @@ module.exports = {
         )
       return subcommand
     }),
-  userPermissions: ['ADMINISTRATOR'],
-  defaultMemberPermissions: 8,
   execute: async (interaction, client) => {
     // Make sure all members' roles are up to date
     await interaction.guild.members.fetch({ force: true })
