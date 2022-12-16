@@ -1,4 +1,30 @@
-const { EmbedBuilder } = require('discord.js')
+// eslint-disable-next-line no-unused-vars
+const { EmbedBuilder, Guild, Channel } = require('discord.js')
+const { Deta } = require('deta')
+const deta = Deta(process.env.DETA_PROJECT_KEY)
+const serverSettingsDB = deta.Base('server-settings')
+
+/**
+ * Gets the log channel of the guild
+ * @param {Guild} guild The guild to get the log channel of
+ * @returns {Promise<Channel>} The guild's log channel
+ */
+async function getLogChannel (guild) {
+  const serverConfig = await serverSettingsDB.get(guild.id)
+  const channel = await guild.channels.fetch(serverConfig.logChannel)
+  return channel
+}
+
+/**
+ * Gets the alerts channel of the guild
+ * @param {Guild} guild The guild to get the alerts channel of
+ * @returns {Promise<Channel>} The guild's alerts channel
+ */
+async function getAlertsChannel (guild) {
+  const serverConfig = await serverSettingsDB.get(guild.id)
+  const channel = await guild.channels.fetch(serverConfig.alertsChannel)
+  return channel
+}
 
 function sendMessage (channel, data) {
   if (!channel) return
@@ -33,4 +59,4 @@ function sendEmbeds (channel, embedConfigs) {
   channel.send({ embeds })
 }
 
-module.exports = { sendMessage, sendMessageAsync, sendEmbeds }
+module.exports = { sendMessage, sendMessageAsync, sendEmbeds, getLogChannel, getAlertsChannel }
