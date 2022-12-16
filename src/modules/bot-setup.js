@@ -2,6 +2,7 @@ const fs = require('fs')
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js')
 // eslint-disable-next-line no-unused-vars
 const { BaseInteraction, ButtonInteraction } = require('discord.js')
+const path = require('path')
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -16,16 +17,20 @@ const commandPermssions = {}
 const token = process.env.DISCORD_TOKEN
 const rest = new REST({ version: '10' }).setToken(token)
 
+function directoryFiles (dir) {
+  return fs.readdirSync(path.join('src', dir)).map(name => ({ name, path: dir }))
+}
+
 async function registerSlashCommands () {
   commands = new Collection()
   const commandArray = [] // Array to store commands for sending to the REST API
-  const commandFiles = fs
-    .readdirSync('src/commands')
-    .filter(file => file.endsWith('.js')) // Get and filter all the files in the "Commands" Folder.
+  const commandFiles = directoryFiles('commands/chat-input')
+    .concat(directoryFiles('commands/context-menu'))
+    .filter(({ name }) => name.endsWith('.js'))
 
   // Loop through the command files
-  for (const file of commandFiles) {
-    const command = require(`../commands/${file}`) // Get and define the command file.
+  for (const { path, name } of commandFiles) {
+    const command = require(`../${path}/${name}`) // Get and define the command file.
     commands.set(command.data.name, command) // Set the command name and file for handler to use.
     commandArray.push(command.data.toJSON()) // Push the command data to an array (for sending to the API).
     commandPermssions[command.data.name] = command.userPermissions || []
@@ -34,10 +39,10 @@ async function registerSlashCommands () {
   // Send command list to Discord API
   const body = commandArray.sort((a, b) => (commandPermssions[a.name]?.length || 0) - (commandPermssions[b.name]?.length || 0))
   try {
-    console.log('Refreshing application (/) commands...')
+    console.log('Refreshing application commands...')
     const commandResponse = await rest.put(Routes.applicationCommands(client.user.id), { body })
-    console.log('Successfully reloaded application (/) commands.')
-    return { success: true, message: 'Successfully reloaded application (/) commands', request: body, response: commandResponse }
+    console.log('Successfully reloaded application commands.')
+    return { success: true, message: 'Successfully reloaded application commands', request: body, response: commandResponse }
   } catch (error) {
     console.error(error)
     return { success: false, error, request: body }

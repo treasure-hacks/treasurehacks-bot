@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
 const { Deta } = require('deta')
-const { getStats } = require('../modules/role-stats')
+const { getStats } = require('../../modules/role-stats')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 

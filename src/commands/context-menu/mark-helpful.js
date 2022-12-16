@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 const { ContextMenuCommandBuilder, ApplicationCommandType, MessageContextMenuCommandInteraction, Client, PermissionFlagsBits } = require('discord.js')
+const { sendMessage, getLogChannel } = require('../../modules/message')
 const { Deta } = require('deta')
-const { sendMessage, getLogChannel } = require('../modules/message')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 
