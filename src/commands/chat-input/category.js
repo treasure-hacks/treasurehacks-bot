@@ -33,7 +33,6 @@ function clearCategory (interaction, client) {
 function syncCategory (interaction, client) {
   const guild = interaction.guild
   const category = interaction.options.getChannel('category')
-  const deleteParent = interaction.options.getBoolean('delete')
   const channelList = guild.channels.cache.filter(c => c.parentId === category.id)
   const embed = {
     title: 'Synced Category',
@@ -48,7 +47,6 @@ function syncCategory (interaction, client) {
   channelList.forEach(channel => {
     channel.lockPermissions()
   })
-  if (deleteParent) category.delete()
 }
 
 /**
@@ -78,14 +76,13 @@ async function teamCategory (interaction, client) {
     })
     return
   }
+  await interaction.deferReply()
 
   const teams = members.reduce((array, item, index) => {
     if (index % size === 0) array.push([item])
     else array[array.length - 1].push(item)
     return array
   }, [])
-
-  // return interaction.reply(JSON.stringify(teams.map(x => x.map(m => { return { id: m.id, u: m.displayName } }))))
 
   async function createChannel (name, type, team) {
     return await interaction.guild.channels.create({
@@ -123,7 +120,7 @@ async function teamCategory (interaction, client) {
       teams.map((team, index) => `Team ${index + 1}: ` + team.map(user => `<@!${user.id}>`).join(', ')).join('\n'),
     color: 0x00aaff
   }
-  interaction.reply({
+  interaction.followUp({
     embeds: [embed]
   })
 }

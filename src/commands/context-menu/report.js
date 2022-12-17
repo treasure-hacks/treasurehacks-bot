@@ -2,11 +2,11 @@
 const { ContextMenuCommandBuilder, ApplicationCommandType, MessageContextMenuCommandInteraction, Client, PermissionFlagsBits } = require('discord.js')
 
 /**
- * Responds to a context menu command interaction
+ * Responds to a user using the Report Command in the context menu
  * @param {MessageContextMenuCommandInteraction} interaction The context menu command interaction
  * @param {Client} client The discord bot client
  */
-async function respond (interaction, client) {
+async function beginReport (interaction, client) {
   // Refresh users
   await interaction.guild.members.fetch()
   const userIsAdmin = interaction.targetMessage.member?.permissions?.has(PermissionFlagsBits.Administrator) || false
@@ -42,5 +42,5 @@ module.exports = {
   data: new ContextMenuCommandBuilder()
     .setName('Report Message')
     .setType(ApplicationCommandType.Message),
-  execute: respond
+  execute: beginReport
 }

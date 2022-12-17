@@ -19,6 +19,7 @@ async function clearRole (interaction, client, sourceProperty) {
     })
     return
   }
+  await interaction.deferReply()
   const failArray = []
   const result = (await Promise.all(role.members.map(async member => {
     return await member.roles.remove(role)
@@ -29,7 +30,7 @@ async function clearRole (interaction, client, sourceProperty) {
     description: `Successfully removed (${result.length}): ${result.map(member => `<@!${member.id}>`)}\n\n` +
       `Failed to remove (${failArray.length}): ${failArray.join(', ')}`
   }
-  interaction.reply({
+  interaction.followUp({
     embeds: [embed]
   })
 }
@@ -43,6 +44,8 @@ async function siphonRole (interaction, client) {
   const clear = interaction.options.getBoolean('clear')
   const source = interaction.options.getRole('source')
   const targetRole = interaction.options.getRole('target')
+
+  await interaction.deferReply()
 
   const addFails = []
   const addResult = (await Promise.all(source.members.map(async member => {
@@ -67,7 +70,7 @@ async function siphonRole (interaction, client) {
       `Failed to add to ${targetRole} (${addFails.length}): ${addFails.join(', ')}` +
       (clear ? `\n\nFailed to remove from ${source} (${removeFails.length}): ${removeFails.join(', ')}` : '')
   }
-  interaction.reply({
+  interaction.followUp({
     embeds: [embed]
   })
 }
