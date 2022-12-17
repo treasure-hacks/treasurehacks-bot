@@ -40,7 +40,7 @@ async function respond (interaction, client) {
 
 module.exports = {
   data: new ContextMenuCommandBuilder()
-    .setName('Report')
+    .setName('Report Message')
     .setType(ApplicationCommandType.Message),
   execute: respond
 }
