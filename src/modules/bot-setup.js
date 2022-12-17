@@ -1,7 +1,7 @@
 const fs = require('fs')
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js')
 // eslint-disable-next-line no-unused-vars
-const { BaseInteraction, ButtonInteraction } = require('discord.js')
+const { BaseInteraction, ButtonInteraction, ModalSubmitInteraction } = require('discord.js')
 const path = require('path')
 const client = new Client({
   intents: [
@@ -13,6 +13,7 @@ const client = new Client({
 }) // Connect to our discord bot
 let commands = new Collection() // Where the bot (slash) commands will be stored
 const buttonActions = new Collection() // Where button actions will be stored
+const modalActions = new Collection() // Where modal submit action handlers will be stored
 const commandPermssions = {}
 const token = process.env.DISCORD_TOKEN
 const rest = new REST({ version: '10' }).setToken(token)
@@ -62,7 +63,23 @@ async function initButtonActions () {
     })
   }
 }
+
+async function initModalActions () {
+  const actionFiles = fs
+    .readdirSync('src/modal-actions')
+    .filter(file => file.endsWith('.js')) // Get and filter all the files in the "Commands" Folder.
+
+  // Loop through the command files
+  for (const file of actionFiles) {
+    const fileActions = require(`../modal-actions/${file}`) // Get and define the command file.
+    fileActions.forEach(action => {
+      modalActions.set(action.name, action.handler) // Set the command name and file for handler to use.
+    })
+  }
+}
+
 initButtonActions()
+initModalActions()
 
 async function respondToCommand (interaction) {
   const command = commands.get(interaction.commandName)
@@ -105,12 +122,40 @@ async function respondToButton (interaction, client) {
 }
 
 /**
+ * Responds to the modal submission interaction
+ * @param {ModalSubmitInteraction} interaction The submission interaction
+ * @param {Client} client The Discord bot client
+ */
+async function respondToModalSubmit (interaction, client) {
+  interaction.baseID = interaction.customId.replace(/#.*$/, '')
+  interaction.extension = interaction.customId.replace(interaction.baseID + '#', '')
+  const handler = modalActions.get(interaction.baseID)
+  if (!handler) {
+    return interaction.reply({
+      content: 'There is no event handler for this modal',
+      ephemeral: true
+    })
+  }
+
+  try {
+    await handler(interaction, client)
+  } catch (error) {
+    console.error(error)
+    return interaction.reply({
+      content: 'There was an error while executing this command!',
+      ephemeral: true
+    })
+  }
+}
+
+/**
  * Responds to the user interaction with the bot
  * @param {BaseInteraction} interaction The interaction with the bot
  */
 async function respondToInteraction (interaction) {
   if (interaction.isButton()) return respondToButton(interaction)
   if (interaction.isCommand()) return respondToCommand(interaction)
+  if (interaction.isModalSubmit()) return respondToModalSubmit(interaction)
 }
 
 module.exports = { client, token, registerSlashCommands, respondToInteraction }
