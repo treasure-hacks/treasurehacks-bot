@@ -62,6 +62,11 @@ async function addInviteRolesToNewMember (member) {
   const invite = newInvites.find(i => i.uses > oldInvites.get(i.code))
   updateGuildInvites(member.guild)
 
+  if (!invite) {
+    // We don't know which invite someone used
+    return console.warn('Unknown invite for user: ' + member.user?.tag)
+  }
+
   const channels = await member.guild.channels.fetch()
   const logChannel = channels.get(serverConfig.logChannel)
 
@@ -110,7 +115,6 @@ async function addInviteRolesToNewMember (member) {
     return action
   })
   await serverSettingsDB.put(serverConfig)
-  console.log(embeds)
   if (actions.length > 0) sendMessage(logChannel, { embeds })
 }
 

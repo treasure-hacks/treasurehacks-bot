@@ -26,10 +26,15 @@ async function getAlertsChannel (guild) {
   return channel
 }
 
+/**
+ * Sends a message to a channel
+ * @param {Channel} channel The channel to send the message to
+ * @param {Object} data The message data
+ */
 function sendMessage (channel, data) {
   if (!channel) return
   channel.send(data)
-    .then(message => console.log(`Sent message: ${message.content}`))
+    .then(() => console.log(`Sent message to ${channel.name}`))
     .catch(console.error)
 }
 
