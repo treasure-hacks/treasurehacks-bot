@@ -94,9 +94,8 @@ async function approveRequest (interaction) {
   })
   const reasonField = fields.find(f => f.name === 'Reason')
   if (reasonField) {
-    sendMessage(channel, `Created From Private Channel Request\n**Reason:** ${
-      reasonField.value
-    }`)
+    sendMessage(channel, 'Created From Private Channel Request\n**Reason:** ' +
+      reasonField.value + '\n' + membersField.value.replace(/,\s/g, ' '))
   }
   fields.push({ name: 'Channel', value: `<#${channel.id}>`, inline: true })
   const edited = await editMessageIfNeeded(interaction.message, 0x00ff00)
