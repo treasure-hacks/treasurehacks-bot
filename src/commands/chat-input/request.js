@@ -31,10 +31,11 @@ async function makeChannelRequest (interaction, client) {
   const name = interaction.options.getString('name').toLowerCase()
     .replace(/\s/g, '-').replace(/[^a-zA-Z0-9-]/g, '')
 
-  const members = interaction.options.getString('members')?.split(' ') || []
-  if (members.some(c => !c.match(/^<@!?\d+>$/))) {
+  const membersString = interaction.options.getString('members')
+  const members = membersString.match(/<@!?\d+>/g)
+  if (!members) {
     interaction.reply({
-      content: 'Members were not formatted properly. Please enter member names separated by spaces. ie `@Bob @Alice`',
+      content: 'No members were mentioned in the members field, If you do not have any team members, enter just your own tag.',
       ephemeral: true
     })
     return
@@ -96,7 +97,7 @@ module.exports = {
     )
     .addStringOption(option => option
       .setName('members')
-      .setDescription('The group members (with the @), separated by spaces, to include in the private chat channel')
+      .setDescription('Group members (with the @) to include in the private channel. If solo, put your own tag.')
       .setRequired(true)
     )
     .addStringOption(option => option
