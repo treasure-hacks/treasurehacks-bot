@@ -29,7 +29,7 @@ async function makeChannelRequest (interaction, client) {
   }
 
   const name = interaction.options.getString('name').toLowerCase()
-    .replace(/\s/g, '-').replace(/[^a-zA-Z0-9-]/g, '')
+    .replace(/[\s_]/g, '-').replace(/[^a-zA-Z0-9-]/g, '')
 
   const membersString = interaction.options.getString('members')
   const members = membersString.match(/<@!?\d+>/g)
