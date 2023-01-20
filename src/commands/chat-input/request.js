@@ -28,14 +28,8 @@ async function makeChannelRequest (interaction, client) {
     return
   }
 
-  const name = interaction.options.getString('name')
-  if (!name.match(/^[a-z0-9-]+$/)) {
-    interaction.reply({
-      content: 'Name must only contain lowercase letters, numbers, and dashes',
-      ephemeral: true
-    })
-    return
-  }
+  const name = interaction.options.getString('name').toLowerCase()
+    .replace(/\s/g, '-').replace(/[^a-zA-Z0-9-]/g, '')
 
   const members = interaction.options.getString('members')?.split(' ') || []
   if (members.some(c => !c.match(/^<@!?\d+>$/))) {
@@ -97,7 +91,7 @@ module.exports = {
     .setDescription('Sends a request to create a private chat channel with the server organizers and other members')
     .addStringOption(option => option
       .setName('name')
-      .setDescription('The name of the group or project (lowercase letters, numbers, and dashes only)')
+      .setDescription('The name of the group or project (this will be the channel name once approved)')
       .setRequired(true)
     )
     .addStringOption(option => option
