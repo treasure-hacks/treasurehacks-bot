@@ -44,9 +44,15 @@ async function archiveChannel (interaction, client) {
     return interaction.reply({ content: 'No changes were made', ephemeral: true })
   }
 
-  interaction.reply({
+  await interaction.reply({
     content: `The following users and roles can no longer send messages in this channel: ${changes.join(', ')}`,
     ephemeral: true
+  })
+  interaction.channel.send({
+    embeds: [{
+      title: '',
+      description: `📁 Channel archived by ${interaction.user}`
+    }]
   })
 }
 
