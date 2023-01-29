@@ -32,14 +32,7 @@ async function makeChannelRequest (interaction, client) {
     .replace(/[\s_]/g, '-').replace(/[^a-zA-Z0-9-]/g, '')
 
   const membersString = interaction.options.getString('members')
-  const members = membersString.match(/<@!?\d+>/g)
-  if (!members) {
-    interaction.reply({
-      content: 'No members were mentioned in the members field, If you do not have any team members, enter just your own tag.',
-      ephemeral: true
-    })
-    return
-  }
+  const members = membersString.match(/<@!?\d+>/g) || []
   members.unshift(interaction.member.toString())
   const uniqueMembers = [...new Set(members)]
 
@@ -97,7 +90,7 @@ module.exports = {
     )
     .addStringOption(option => option
       .setName('members')
-      .setDescription('Group members (with the @) to include in the private channel. If solo, put your own tag.')
+      .setDescription('Group members (with the @) to include in the private channel. If solo, write "None"')
       .setRequired(true)
     )
     .addStringOption(option => option
