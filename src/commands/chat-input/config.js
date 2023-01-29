@@ -210,6 +210,10 @@ module.exports = {
           .setDescription('The category to create private chat channels in')
           .addChannelTypes(ChannelType.GuildCategory)
         )
+        .addBooleanOption(option => option
+          .setName('sync-first')
+          .setDescription('Sync with category permissions before removing @everyone and adding team members')
+        )
       return subcommand
     }),
   execute: async (interaction, client) => {

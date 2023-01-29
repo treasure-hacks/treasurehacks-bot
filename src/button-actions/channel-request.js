@@ -78,20 +78,28 @@ async function approveRequest (interaction) {
   const channel = await interaction.guild.channels.create({
     name: 'team-' + nameField.value,
     type: ChannelType.GuildText,
-    parent: category,
-    permissionOverwrites: [
+    parent: category
+  })
+
+  // Add overwrites on top of category if chosen to sync first, otherwise just set overwrites
+  if (serverConfig.channelRequest?.syncFirst) {
+    await channel.permissionOverwrites.create(channel.guild.roles.everyone, { ViewChannel: false })
+    for (const user of team) {
+      await channel.permissionOverwrites.create(user.id, { ViewChannel: true })
+    }
+  } else {
+    channel.permissionOverwrites.set([
       {
-        id: interaction.guild.id, // @everyone
+        id: interaction.guild.roles.everyone,
         deny: [PermissionsBitField.Flags.ViewChannel]
       },
-      ...team.map(user => {
-        return {
-          id: user.id,
-          allow: [PermissionsBitField.Flags.ViewChannel]
-        }
-      })
-    ]
-  })
+      ...team.map(user => ({
+        id: user.id,
+        allow: [PermissionsBitField.Flags.ViewChannel]
+      }))
+    ])
+  }
+
   const reasonField = fields.find(f => f.name === 'Reason')
   if (reasonField) {
     sendMessage(channel, 'Created From Private Channel Request\n**Reason:** ' +
