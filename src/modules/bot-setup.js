@@ -1,7 +1,7 @@
 const fs = require('fs')
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js')
 // eslint-disable-next-line no-unused-vars
-const { BaseInteraction, ButtonInteraction, ModalSubmitInteraction } = require('discord.js')
+const { CommandInteraction, ButtonInteraction, ModalSubmitInteraction } = require('discord.js')
 const path = require('path')
 const client = new Client({
   intents: [
@@ -32,7 +32,7 @@ async function registerSlashCommands () {
   // Loop through the command files
   for (const { path, name } of commandFiles) {
     const command = require(`../${path}/${name}`) // Get and define the command file.
-    commands.set(command.data.name, command) // Set the command name and file for handler to use.
+    commands.set((command.data.type || 1) + '_' + command.data.name, command) // Set the command name and file for handler to use.
     commandArray.push(command.data.toJSON()) // Push the command data to an array (for sending to the API).
     commandPermssions[command.data.name] = command.userPermissions || []
   }
@@ -81,8 +81,12 @@ async function initModalActions () {
 initButtonActions()
 initModalActions()
 
+/**
+ * Responds to an interaction
+ * @param {CommandInteraction} interaction The interaction
+ */
 async function respondToCommand (interaction) {
-  const command = commands.get(interaction.commandName)
+  const command = commands.get(interaction.commandType + '_' + interaction.commandName)
   if (!command) return
 
   try {

@@ -2,6 +2,16 @@
 const { Guild } = require('discord.js')
 
 /**
+ * Gets the leaderboard from a slash command interaction
+ * @param {ChatInputCommandInteraction} interaction The chat input command interaction
+ */
+async function getLeaderboard (serverConfig, name) {
+  const { leaderboards } = serverConfig
+  if (!leaderboards || !leaderboards[name]) return null
+  return leaderboards[name]
+}
+
+/**
  * Generates the post body of a leaderboard
  * @param {Object} leaderboard The leaderboard object
  * @return {String} The contents of the leaderboard message
@@ -40,4 +50,4 @@ async function updateLeaderboardPost (leaderboard, guild) {
   message.edit(generateLeaderboardPost(leaderboard))
 }
 
-module.exports = { generateLeaderboardPost, updateLeaderboardPost, getLeaderboardMessage }
+module.exports = { getLeaderboard, generateLeaderboardPost, updateLeaderboardPost, getLeaderboardMessage }

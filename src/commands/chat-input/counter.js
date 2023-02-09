@@ -3,17 +3,7 @@ const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlag
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
-const { generateLeaderboardPost, updateLeaderboardPost, getLeaderboardMessage } = require('../../scripts/leaderboard')
-
-/**
- * Gets the leaderboard from a slash command interaction
- * @param {ChatInputCommandInteraction} interaction The chat input command interaction
- */
-async function getLeaderboard (serverConfig, name) {
-  const { leaderboards } = serverConfig
-  if (!leaderboards || !leaderboards[name]) return null
-  return leaderboards[name]
-}
+const { getLeaderboard, generateLeaderboardPost, updateLeaderboardPost, getLeaderboardMessage } = require('../../scripts/leaderboard')
 
 /**
  * Creates a leaderboard from a slash command interaction
