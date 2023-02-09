@@ -3,7 +3,17 @@ const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlag
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
-const { generateLeaderboardPost } = require('../../scripts/leaderboard')
+const { generateLeaderboardPost, updateLeaderboardPost, getLeaderboardMessage } = require('../../scripts/leaderboard')
+
+/**
+ * Gets the leaderboard from a slash command interaction
+ * @param {ChatInputCommandInteraction} interaction The chat input command interaction
+ */
+async function getLeaderboard (serverConfig, name) {
+  const { leaderboards } = serverConfig
+  if (!leaderboards || !leaderboards[name]) return null
+  return leaderboards[name]
+}
 
 /**
  * Creates a leaderboard from a slash command interaction
@@ -96,11 +106,13 @@ async function deleteLeaderboard (interaction, client) {
 async function repostLeaderboard (interaction, client) {
   const name = interaction.options.getString('name')
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
-  const { leaderboards } = serverConfig
-  if (!leaderboards || !leaderboards[name]) {
-    return interaction.reply(`No such leaderboard with name ${name} exists`)
+  const leaderboard = await getLeaderboard(serverConfig, name)
+  if (!leaderboard) {
+    return interaction.reply({
+      content: `No such leaderboard with name ${name} exists`,
+      ephemeral: true
+    })
   }
-  const leaderboard = leaderboards[name]
   await interaction.deferReply()
 
   // Delete the old post for the leaderboard if it exists
@@ -119,19 +131,173 @@ async function repostLeaderboard (interaction, client) {
   await serverSettingsDB.put(serverConfig)
 }
 
-/*
-# Create a counter
-/counter create name:str count_type:post|user channel:channel
-# Delete a counter
-/counter delete name:str
-# Re-posts the counter post in the current channel
-/counter repost name:str
-# Adds a post to a counter
-/counter post_score name:str post:post count:bool
-# Changes the score of a user
-/counter user_score name:str user:user score:int
-
+/**
+ * Updates a posts leaderboard from a slash command interaction
+ * @param {ChatInputCommandInteraction} interaction The chat input command interaction
+ * @param {Client} client The discord bot client
  */
+async function updatePostsLeaderboard (interaction, client) {
+  const name = interaction.options.getString('name')
+  const serverConfig = await serverSettingsDB.get(interaction.guild.id)
+  const leaderboard = await getLeaderboard(serverConfig, name)
+  if (!leaderboard) {
+    return interaction.reply({
+      content: `No such leaderboard with name ${name} exists`,
+      ephemeral: true
+    })
+  }
+  if (leaderboard.type !== 'post') {
+    return interaction.reply({
+      content: 'Leaderboard is not a post leaderboard',
+      ephemeral: true
+    })
+  }
+
+  const linksResponse = interaction.options.getString('links')
+  if (!linksResponse.match(/^(https:\/\/[^\s]*discord\.com\/channels(\/\d+){3}(\s|$))+/)) {
+    return interaction.reply({
+      content: 'Could not find space-separated links to messages',
+      ephemeral: true
+    })
+  }
+
+  await interaction.deferReply()
+
+  for (const link of linksResponse.split(' ')) {
+    const [channelID, messageID] = link.match(/\/channels\/\d+\/(\d+)\/(\d+)/).slice(1)
+    const channel = await interaction.guild.channels.fetch(channelID)
+    const message = await channel?.messages?.fetch(messageID).catch(() => {})
+    if (!message) continue
+
+    const userScore = leaderboard.scores[message.member.id] || []
+    leaderboard.scores[message.member.id] = userScore
+    if (userScore.find(m => m.messageID === messageID)) continue
+    userScore.push({ channelID, messageID })
+  }
+
+  updateLeaderboardPost(leaderboard, interaction.guild)
+  await serverSettingsDB.put(serverConfig)
+  const lm = await getLeaderboardMessage(leaderboard, interaction.guild)
+  interaction.followUp({
+    embeds: [{
+      title: 'Leaderboard Updated',
+      fields: [
+        { name: 'Name', value: name, inline: true },
+        { name: 'Title', value: leaderboard.title, inline: true },
+        { name: 'Message Link', value: lm ? `[#${lm.channel.name}](${lm.url})` : '<None>', inline: true }
+      ],
+      color: 0x0077cc
+    }]
+  })
+}
+
+/**
+ * Updates a posts leaderboard from a slash command interaction
+ * @param {ChatInputCommandInteraction} interaction The chat input command interaction
+ * @param {Client} client The discord bot client
+ */
+async function updateUsersLeaderboard (interaction, client) {
+  const name = interaction.options.getString('name')
+  const amount = interaction.options.getNumber('amount') || 1
+  const serverConfig = await serverSettingsDB.get(interaction.guild.id)
+  const leaderboard = await getLeaderboard(serverConfig, name)
+  if (!leaderboard) {
+    return interaction.reply({
+      content: `No such leaderboard with name ${name} exists`,
+      ephemeral: true
+    })
+  }
+  if (leaderboard.type !== 'user') {
+    return interaction.reply({
+      content: 'Leaderboard is not a user leaderboard',
+      ephemeral: true
+    })
+  }
+
+  const usersResponse = interaction.options.getString('users')
+  const usersMatch = usersResponse.match(/<@\D?(\d+)>/g)
+  if (!usersMatch) {
+    return interaction.reply({
+      content: 'Could not find user mentions',
+      ephemeral: true
+    })
+  }
+
+  await interaction.deferReply()
+
+  for (const mention of usersMatch) {
+    const [userID] = mention.match(/<@\D?(\d+)>/).slice(1)
+    const userScore = leaderboard.scores[userID] || 0
+    leaderboard.scores[userID] = userScore + amount
+  }
+
+  updateLeaderboardPost(leaderboard, interaction.guild)
+  await serverSettingsDB.put(serverConfig)
+  const lm = await getLeaderboardMessage(leaderboard, interaction.guild)
+  interaction.followUp({
+    embeds: [{
+      title: 'Leaderboard Updated',
+      fields: [
+        { name: 'Name', value: name, inline: true },
+        { name: 'Title', value: leaderboard.title, inline: true },
+        { name: 'Message Link', value: lm ? `[#${lm.channel.name}](${lm.url})` : '<None>', inline: true }
+      ],
+      color: 0x0077cc
+    }]
+  })
+}
+
+/**
+ * Lists details about all current leaderboards
+ * @param {ChatInputCommandInteraction} interaction The chat input command interaction
+ * @param {Client} client The discord bot client
+ */
+async function listLeaderboards (interaction, client) {
+  const serverConfig = await serverSettingsDB.get(interaction.guild.id)
+  const { leaderboards } = serverConfig
+  const texts = []
+  for (const l of Object.values(leaderboards)) {
+    const message = await getLeaderboardMessage(l, interaction.guild)
+    const highest = Object.entries(l.scores).sort((b, a) => {
+      return (a[1].length || a[1]) - (b[1].length || b[1])
+    })[0]
+    const text = `__**${l.title}** (${l.name}):__\n` +
+      `Users on Leaderboard: ${Object.keys(l.scores).length}` +
+      (highest ? `\nHighest Scorer: <@${highest[0]}> (${highest[1].length || highest[1]})` : '') +
+      (message ? `\n[Link to Leaderboard](${message.url})` : '')
+    texts.push(text)
+  }
+  interaction.reply(texts.join('\n\n'))
+}
+
+/**
+ * Resets a leaderboard
+ * @param {ChatInputCommandInteraction} interaction The chat input command interaction
+ * @param {Client} client The discord bot client
+ */
+async function resetLeaderboard (interaction, client) {
+  const name = interaction.options.getString('name')
+  const serverConfig = await serverSettingsDB.get(interaction.guild.id)
+  const leaderboard = await getLeaderboard(serverConfig, name)
+  const replyContent = 'Old Leaderboard Content:\n\n' + generateLeaderboardPost(leaderboard)
+
+  leaderboard.scores = {}
+  updateLeaderboardPost(leaderboard, interaction.guild)
+  await serverSettingsDB.put(serverConfig)
+  const lm = await getLeaderboardMessage(leaderboard, interaction.guild)
+  interaction.reply({
+    embeds: [{
+      title: 'Leaderboard Reset',
+      content: replyContent,
+      fields: [
+        { name: 'Name', value: name, inline: true },
+        { name: 'Title', value: leaderboard.title, inline: true },
+        { name: 'Message Link', value: lm ? `[#${lm.channel.name}](${lm.url})` : '<None>', inline: true }
+      ],
+      color: 0x0077cc
+    }]
+  })
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -187,15 +353,57 @@ module.exports = {
         .setRequired(true)
       )
     )
+    .addSubcommand(subcommand => subcommand
+      .setName('reset')
+      .setDescription('Resets a leaderboard')
+      .addStringOption(option => option
+        .setName('name')
+        .setDescription('The name of the leaderboard to reset')
+        .setRequired(true)
+      )
+    )
+    .addSubcommand(subcommand => subcommand
+      .setName('post_score')
+      .setDescription('Updates a leaderboard by adding posts to it')
+      .addStringOption(option => option
+        .setName('name')
+        .setDescription('The name of the leaderboard')
+        .setRequired(true)
+      )
+      .addStringOption(option => option
+        .setName('links')
+        .setDescription('Links to the posts to count, separated by spaces')
+        .setRequired(true)
+      )
+    )
+    .addSubcommand(subcommand => subcommand
+      .setName('user_score')
+      .setDescription('Updates a leaderboard by adding a point to the following users')
+      .addStringOption(option => option
+        .setName('name')
+        .setDescription('The name of the leaderboard')
+        .setRequired(true)
+      )
+      .addStringOption(option => option
+        .setName('users')
+        .setDescription('Mentions of the users to increment points for')
+        .setRequired(true)
+      )
+      .addNumberOption(option => option
+        .setName('amount')
+        .setDescription('Amount to increment the users\' scores by, defaults to 1')
+      )
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute: async (interaction, client) => {
     switch (interaction.options.getSubcommand()) {
       case 'create': return createLeaderboard(interaction, client)
       case 'delete': return deleteLeaderboard(interaction, client)
       case 'repost': return repostLeaderboard(interaction, client)
-      // case 'post_score': return respond(interaction, client)
-      // case 'user_score': return respond(interaction, client)
-      // case 'list': return respond(interaction, client)
+      case 'post_score': return updatePostsLeaderboard(interaction, client)
+      case 'user_score': return updateUsersLeaderboard(interaction, client)
+      case 'list': return listLeaderboards(interaction, client)
+      case 'reset': return resetLeaderboard(interaction, client)
     }
   }
 }
