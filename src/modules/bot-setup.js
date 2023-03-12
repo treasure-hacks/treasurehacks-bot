@@ -106,7 +106,9 @@ async function respondToCommand (interaction) {
  * @param {Client} client The Discord bot client
  */
 async function respondToButton (interaction, client) {
-  const handler = buttonActions.get(interaction.customId)
+  interaction.baseID = interaction.customId.replace(/#.*$/, '')
+  interaction.extension = interaction.customId.replace(interaction.baseID + '#', '')
+  const handler = buttonActions.get(interaction.baseID)
   if (!handler) {
     return interaction.reply({
       content: 'There is no event handler for this button',
