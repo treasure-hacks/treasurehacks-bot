@@ -7,10 +7,12 @@ const { Events } = require('discord.js')
 
 // Treasure Hacks Bot Setup
 const { client, token, registerSlashCommands, respondToInteraction } = require('./modules/bot-setup.js')
+const { initCronjobs } = require('./modules/cron')
 
 client.once('ready', async () => {
   console.log(`Logged in as \x1b[34m${client.user.tag}\x1b[0m`)
   registerSlashCommands()
+  initCronjobs(client)
 })
 client.on(Events.InteractionCreate, respondToInteraction)
 
