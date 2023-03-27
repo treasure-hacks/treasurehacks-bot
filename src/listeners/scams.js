@@ -44,6 +44,7 @@ async function scanMessage (message) {
   fd.append('chatHistory', JSON.stringify(data))
   const response = await axios.post('https://api.deepai.org/chat_response', fd, {
     headers: {
+      'api-key': process.env.DEEPAI_KEY,
       origin: 'https://deepai.org',
       referrer: 'https://deepai.org/chat',
       'Content-Type': 'multipart/form-data; boundary=' + fd._boundary
