@@ -19,6 +19,8 @@ async function scanMessage (message) {
   if (!serverConfig.cryptoScamScanner?.enabled) return
 
   const joinedDays = (new Date() - message.member.joinedAt) / 1000 / 3600 / 24
+  const minLength = serverConfig.cryptoScamScanner.minLength || 30
+  if (message.content && message.content.length < minLength) return
   if (joinedDays > serverConfig.cryptoScamScanner.maxDays) return
 
   const ignoredRoles = serverConfig.cryptoScamScanner?.ignoredRoles || []
