@@ -20,7 +20,7 @@ async function scanMessage (message) {
 
   const joinedDays = (new Date() - message.member.joinedAt) / 1000 / 3600 / 24
   const minLength = serverConfig.cryptoScamScanner.minLength || 30
-  if (message.content && message.content.length < minLength) return
+  if (message.content != null && message.content.length < minLength) return
   if (joinedDays > serverConfig.cryptoScamScanner.maxDays) return
 
   const ignoredRoles = serverConfig.cryptoScamScanner?.ignoredRoles || []
@@ -54,7 +54,7 @@ async function scanMessage (message) {
     referrerPolicy: 'same-origin'
   }).catch((e) => { console.error(e) })
   if (!response?.data || !/yes/i.test(response.data)) return
-  console.log('Scam Message Log:', { response: response.data, message: message.cleanContent })
+  console.log('Scam Message Log:', { response: response.data, message: message.cleanContent, minLength })
   alertsChannel.send({ content: `[BETA] Message was marked as crypto scam.\n${message.url}` })
 }
 
