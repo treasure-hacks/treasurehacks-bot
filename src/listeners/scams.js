@@ -54,6 +54,7 @@ async function scanMessage (message) {
     referrerPolicy: 'same-origin'
   }).catch((e) => { console.error(e) })
   if (!response?.data || !/yes/i.test(response.data)) return
+  console.log('Scam Message Log:', { response: response.data, message: message.cleanContent })
   alertsChannel.send({ content: `[BETA] Message was marked as crypto scam.\n${message.url}` })
 }
 
