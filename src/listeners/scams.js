@@ -35,10 +35,10 @@ async function scanMessage (message) {
   const data = [
     {
       role: 'system',
-      content: 'A crypto scam always consists of the following: (1) a scammer saying that they earned or made ' +
-        'a certain amount of money either in a short time or from a market of some sort and (2) asking the target ' +
-        'user to reach out to them. Determine whether the following messages are crypto scams. Provided the entire ' +
-        'message, respond in 1 word: "yes" or "no". (If there is insufficient information, respond with "no")'
+      content: 'Each user message is provided in its entirety. A crypto scam always consists of the following: ' +
+        '(1) a scammer saying that they earned or made a certain amount of money either in a short time or from ' +
+        'a market of some sort and (2) asking the target user to reach out to them. Determine whether the following ' +
+        'messages are crypto scams. Respond in 1 word only: "yes" or "no". (If there is insufficient information, respond with "no")'
     },
     { role: 'user', content: message.cleanContent }
   ]
@@ -53,9 +53,14 @@ async function scanMessage (message) {
     },
     referrerPolicy: 'same-origin'
   }).catch((e) => { console.error(e) })
-  if (!response?.data || !/yes/i.test(response.data)) return
+  if (!response?.data || !/yes/i.test(response.data) || response.data.length > 50) return
   console.log('Scam Message Log:', { response: response.data, message: message.cleanContent, minLength })
-  alertsChannel.send({ content: `[BETA] Message was marked as crypto scam.\n${message.url}` })
+  alertsChannel.send({
+    content: `[BETA] Message was marked as crypto scam.\n${message.url}`,
+    embeds: [{
+      description: message.cleanContent
+    }]
+  })
 }
 
 client.on(Events.MessageCreate, scanMessage)
