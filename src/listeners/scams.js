@@ -36,9 +36,10 @@ async function scanMessage (message) {
     {
       role: 'system',
       content: 'Each user message is provided in its entirety. A crypto scam always consists of the following: ' +
-        '(1) a scammer saying that they earned or made a certain amount of money either in a short time or from ' +
-        'a market of some sort and (2) asking the target user to reach out to them. Determine whether the following ' +
-        'messages are crypto scams. Respond in 1 word only: "yes" or "no". (If there is insufficient information, respond with "no")'
+        'first, a scammer saying that they earned or made a certain amount of money either in a short time or from ' +
+        'a market of some sort and second, asking the target user to reach out to them. Determine whether the following ' +
+        'messages are crypto scams. Respond in 1 word only: "yes" or "no". If the user\'s message is definitely a crypto scam, ' +
+        'respond "yes". In all other circumstances (including asking questions about a crypto scam or having insufficient information) respond "no"'
     },
     { role: 'user', content: message.cleanContent }
   ]
@@ -53,7 +54,7 @@ async function scanMessage (message) {
     },
     referrerPolicy: 'same-origin'
   }).catch((e) => { console.error(e) })
-  if (!response?.data || !/yes/i.test(response.data) || response.data.length > 50) return
+  if (!response?.data || !/yes/i.test(response.data) || response.data.length > 20) return
   console.log('Scam Message Log:', { response: response.data, message: message.cleanContent, minLength })
   alertsChannel.send({
     content: `[BETA] Message was marked as crypto scam.\n${message.url}`,
