@@ -4,7 +4,7 @@ const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 
-const defaultServerConfig = { enabled: false, ignoredRoles: [] }
+const defaultServerConfig = { enabled: false, ignoredRoles: [], counts: {} }
 
 /**
  * Gets the specified roles from the slash command options
@@ -108,11 +108,32 @@ async function updateIgnoredRoles (interaction, client) {
   await serverSettingsDB.put(serverConfig)
   interaction.reply({
     embeds: [{
-      title: 'message counter',
+      title: 'Message Counter',
       description: 'Successfully updated the ignore list of the message counter.\n' +
         `${message}\nCurrent Ignored Rules: ${ignoredRolesStr || 'None'}`,
       color: 0x0088ff
     }]
+  })
+}
+
+/**
+ * Replies with the number of messages the top 100 people have sent
+ * @param {ChatInputCommandInteraction} interaction The slash command interaction
+ * @param {Client} client The discord bot client
+ */
+async function replyWithCounts (interaction, client) {
+  const serverConfig = await serverSettingsDB.get(interaction.guild.id)
+  const counts = serverConfig.messageCounter?.counts
+  if (!counts) return interaction.reply({ content: 'No counts yet', ephemeral: true })
+  const entries = Object.entries(counts)
+  const messageContent = entries
+    .sort((b, a) => a[1] - b[1]) // Sort descending by count
+    .slice(0, 75) // Only the first 75 users
+    .map(x => `<@${x[0]}>: ${x[1]}`)
+    .join('\n')
+  interaction.reply({
+    content: '__**Message Counts:**__\n\n' + messageContent +
+      (Object.values(counts).length > 75 ? '\n...' : '')
   })
 }
 
@@ -128,8 +149,8 @@ async function replyWithStatus (interaction, client) {
   const ignoredRolesStr = ignoredRoles.map(r => `<@&${r}>`).join(', ')
   interaction.reply({
     embeds: [{
-      title: 'message counter',
-      description: `message counter is currently ${enabled ? 'enabled' : 'disabled'}\n` +
+      title: 'Message Counter',
+      description: `Message counter is currently ${enabled ? 'enabled' : 'disabled'}\n` +
         `Ignored roles: ${ignoredRolesStr || 'None'}`,
       color: enabled ? 0x00ff00 : 0xff0000
     }]
@@ -154,6 +175,10 @@ module.exports = {
       return subcommand
     })
     .addSubcommand(subcommand => {
+      subcommand.setName('counts').setDescription('Gets the number of messages everyone has sent')
+      return subcommand
+    })
+    .addSubcommand(subcommand => {
       subcommand.setName('ignored-roles').setDescription('Modifies roles whose messages should not be counter')
         .addStringOption(option => option
           .setName('add')
@@ -173,6 +198,7 @@ module.exports = {
     switch (interaction.options.getSubcommand()) {
       case 'enable': return setCounterStatus(interaction, client, true)
       case 'disable': return setCounterStatus(interaction, client, false)
+      case 'counts': return replyWithCounts(interaction, client, false)
       case 'ignored-roles': return updateIgnoredRoles(interaction, client)
       case 'status': return replyWithStatus(interaction, client)
     }
