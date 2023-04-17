@@ -122,6 +122,8 @@ async function updateIgnoredRoles (interaction, client) {
  * @param {Client} client The discord bot client
  */
 async function replyWithCounts (interaction, client) {
+  const isPublic = interaction.channel.permissionsFor(interaction.guild.roles.everyone)
+    .has(PermissionFlagsBits.ViewChannel)
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
   const counts = serverConfig.messageCounter?.counts
   if (!counts) return interaction.reply({ content: 'No counts yet', ephemeral: true })
@@ -133,7 +135,8 @@ async function replyWithCounts (interaction, client) {
     .join('\n')
   interaction.reply({
     content: '__**Message Counts:**__\n\n' + messageContent +
-      (Object.values(counts).length > 75 ? '\n...' : '')
+      (Object.values(counts).length > 75 ? '\n...' : ''),
+    ephemeral: isPublic
   })
 }
 
