@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { Message, Events } = require('discord.js')
+const { Message, Events, PermissionFlagsBits } = require('discord.js')
 const { client } = require('../modules/bot-setup')
 
 /**
@@ -9,9 +9,12 @@ const { client } = require('../modules/bot-setup')
 async function botReactFr (message) {
   // Ignore messages sent by bots
   if (!message.member || message.member.user.bot) return
-  if (!/^fr$/i.test(message.content)) return
+  const isPublic = message.channel.permissionsFor(message.guild.roles.everyone)
+    .has(PermissionFlagsBits.ViewChannel)
+  if (!isPublic || !/^f(r|acts?)$/i.test(message.content)) return
 
   message.react('🤖')
 }
 
 client.on(Events.MessageCreate, botReactFr)
+client.on(Events.MessageUpdate, (oldMsg, newMsg) => botReactFr(newMsg))
