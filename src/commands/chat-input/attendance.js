@@ -17,7 +17,7 @@ async function recordAttendance (interaction, client) {
     return interaction.reply({ content: 'Error: Is not a voice channel', ephemeral: true })
   }
   serverConfig.attendance = serverConfig.attendance || {}
-  await interaction.guild.voiceStates.resolve()
+  await interaction.guild.fetch() // Fetching this refreshes voice states cache
   const voiceStates = interaction.guild.voiceStates.cache.filter(vs => vs.channelId === interaction.channel.id)
   const members = voiceStates.map(vs => vs.member.user.id)
   if (members.length === 0) return interaction.reply({ content: 'Error: No members in voice channel', ephemeral: true })
