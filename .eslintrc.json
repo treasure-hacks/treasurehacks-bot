@@ -11,5 +11,8 @@
         "ecmaVersion": 2021
     },
     "rules": {
+    },
+    "globals": {
+        "fetch": true
     }
 }
