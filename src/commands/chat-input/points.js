@@ -27,7 +27,6 @@ async function respondWithPoints (interaction, client) {
     points += weekly = count * 15
   }
 
-  /** @todo Add workshop attendance counter, and leave a similar @todo doc in place of this one */
   const attendance = serverConfig.attendance || {}
   const workshops = Object.values(attendance).filter(w => w.find(p => p === userID)).length
   points += workshops * 20
