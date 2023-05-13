@@ -28,6 +28,9 @@ async function respondWithPoints (interaction, client) {
   }
 
   /** @todo Add workshop attendance counter, and leave a similar @todo doc in place of this one */
+  const attendance = serverConfig.attendance || {}
+  const workshops = Object.values(attendance).filter(w => w.find(p => p === userID)).length
+  points += workshops * 20
 
   const plural = points === 1 ? '' : 's'
   interaction.reply({
@@ -37,7 +40,8 @@ async function respondWithPoints (interaction, client) {
       description: `You have ${points} point${plural} in ${interaction.guild.name}`,
       fields: [
         { name: 'Messages', value: `${messages} sent`, inline: true },
-        { name: 'Weekly Challenges', value: `${weekly / 15} completed`, inline: true }
+        { name: 'Weekly Challenges', value: `${weekly / 15} completed`, inline: true },
+        { name: 'Workshops', value: `${workshops} attended`, inline: true }
       ]
     }],
     ephemeral: true
