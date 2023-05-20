@@ -1,6 +1,5 @@
 // eslint-disable-next-line no-unused-vars
 const { Message, Events } = require('discord.js')
-const axios = require('axios')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const urlSafetyDB = deta.Base('domain-reputations')
@@ -37,9 +36,9 @@ async function scanMessage (message) {
     let entry = await urlSafetyDB.get(url.hostname)
     if (!entry) {
       // eslint-disable-next-line
-      entry = (await axios({
-        url: `https://ipqualityscore.com/api/json/url/${process.env.IPQS_KEY}/${encodeURIComponent(url.hostname)}`
-      }).catch(e => sendMessage(logChannel, 'Unabled to scan hostname ' + url.hostname)))?.data
+      entry = await fetch(`https://ipqualityscore.com/api/json/url/${process.env.IPQS_KEY}/${encodeURIComponent(url.hostname)}`)
+        .then(x => x.json())
+        .catch(() => sendMessage(logChannel, 'Unabled to scan hostname ' + url.hostname))
       console.log(`New hostname added to database: ${url.hostname}`)
       urlSafetyDB.put(entry, url.hostname, { expireIn: 2592000 }) // Expire in 1 month
     }
