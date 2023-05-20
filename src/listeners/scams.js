@@ -1,10 +1,10 @@
 // eslint-disable-next-line no-unused-vars
 const { Message, Events } = require('discord.js')
-const axios = require('axios')
+// const axios = require('axios')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
-const FormData = require('form-data')
+// const FormData = require('form-data')
 
 const { client } = require('../modules/bot-setup')
 
@@ -45,17 +45,20 @@ async function scanMessage (message) {
   ]
   const fd = new FormData()
   fd.append('chatHistory', JSON.stringify(data))
-  const response = await axios.post('https://api.deepai.org/chat_response', fd, {
+  const response = await fetch('https://api.deepai.org/chat_response', {
     headers: {
       'api-key': process.env.DEEPAI_KEY,
       origin: 'https://deepai.org',
-      referrer: 'https://deepai.org/chat',
-      'Content-Type': 'multipart/form-data; boundary=' + fd._boundary
+      referrer: 'https://deepai.org/chat'//,
+      // 'Content-Type': 'multipart/form-data; boundary=' + fd.getBoundary()
     },
+    body: fd, // .getBuffer().toString(), // fetch does not convert to string automatically
+    method: 'POST',
     referrerPolicy: 'same-origin'
-  }).catch((e) => { console.error(e) })
-  if (!response?.data || !/yes/i.test(response.data) || response.data.length > 20) return
-  console.log('Scam Message Log:', { response: response.data, message: message.cleanContent, minLength })
+  }).then(x => console.log(x) || x.text()).catch((e) => { console.error(e) })
+  console.log(response)
+  if (!response || !/yes/i.test(response) || response.length > 20) return
+  console.log('Scam Message Log:', { response: response, message: message.cleanContent, minLength })
   alertsChannel.send({
     content: `[BETA] Message was marked as crypto scam.\n${message.url}`,
     embeds: [{

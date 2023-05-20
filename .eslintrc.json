@@ -13,6 +13,7 @@
     "rules": {
     },
     "globals": {
-        "fetch": true
+        "fetch": true,
+        "FormData": true
     }
 }
