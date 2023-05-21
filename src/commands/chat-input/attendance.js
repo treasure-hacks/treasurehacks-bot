@@ -59,5 +59,8 @@ module.exports = {
       case 'list': return listAttendance(interaction, client, true)
       case 'record': return recordAttendance(interaction, client, false)
     }
-  }
+  },
+  // expose for tests
+  recordAttendance,
+  listAttendance
 }

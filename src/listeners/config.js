@@ -41,3 +41,5 @@ async function createServerConfigs () {
 
 client.once(Events.ClientReady, createServerConfigs)
 client.on(Events.GuildCreate, createServerConfig)
+
+module.exports = { createDefaultSettings }
