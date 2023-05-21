@@ -1,10 +1,10 @@
 const { ChannelType } = require('discord.js')
 // Mocks must come before command imports
-const discordMock = require('../.jest/mock-discord')
-const detaMock = require('../.jest/mock-deta')
+const discordMock = require('../../../.jest/mock-discord')
+const detaMock = require('../../../.jest/mock-deta')
 // Command Imports must come after mocks
-const { recordAttendance, listAttendance } = require('../src/commands/chat-input/attendance')
-const { createDefaultSettings } = require('../src/listeners/config')
+const { recordAttendance, listAttendance } = require('../../../src/commands/chat-input/attendance')
+const { createDefaultSettings } = require('../../../src/listeners/config')
 
 function createVoiceState (channel) {
   return {
