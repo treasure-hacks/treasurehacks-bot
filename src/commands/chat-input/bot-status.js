@@ -44,5 +44,7 @@ module.exports = {
     ),
   execute: async (interaction, client) => {
     setBotStatus(interaction, client)
-  }
+  },
+  // Expose for tests
+  setBotStatus
 }

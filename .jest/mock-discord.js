@@ -1,4 +1,4 @@
-const { ChannelType, ChannelFlagsBitField, PermissionOverwriteManager, Client, Guild, BaseInteraction, User, GuildChannel, ChatInputCommandInteraction
+const { ChannelType, ChannelFlagsBitField, PermissionOverwriteManager, Client, Guild, BaseInteraction, User, GuildChannel, ChatInputCommandInteraction, ClientUser
 } = require("discord.js")
 
 
@@ -94,8 +94,20 @@ const client = {
   off: jest.fn(),
   removeAllListeners: jest.fn(),
 }
+const clientUser = {
+  edit: jest.fn(),
+  setActivity: jest.fn(),
+  setActivity: jest.fn(),
+  setAFK: jest.fn(),
+  setAvatar: jest.fn(),
+  setPresence: jest.fn(),
+  setStatus: jest.fn(),
+  setUsername: jest.fn()
+}
 function createClient (options = {}, intents = []) {
   const result = new Client({ ...options, intents })
+  result.user = new ClientUser(result, {})
+  Object.assign(result.user, clientUser)
   Object.assign(result, client, options)
   return result
 }
@@ -219,7 +231,11 @@ const interaction = {
   isChannelSelectMenu: jest.fn(),
   isRepliable: jest.fn(),
   options: {
-    getString: jest.fn(str => str)
+    getString: jest.fn(),
+    getChannel: jest.fn(),
+    getInteger: jest.fn(),
+    getRole: jest.fn(),
+    getBoolean: jest.fn(),
   },
   // Chat Input Command Interactions
   deferReply: jest.fn(),

@@ -16,6 +16,7 @@ function createVoiceState (channel) {
 const today = new Date().toLocaleDateString()
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: 'g1' })
+discordMock.interaction.options.getString.mockReturnValue('name')
 
 describe('Attendance Record Command', () => {
   it('Replies with error if the current channel is not a voice channel', async () => {
@@ -23,7 +24,6 @@ describe('Attendance Record Command', () => {
     const channel = discordMock.createChannel(guild, { type: ChannelType.GuildText })
     client.channels.cache.set(channel.id, channel)
     const interaction = discordMock.createInteraction(client, { guild, channel })
-
     await recordAttendance(interaction, client)
     expect(interaction.reply).toBeCalledWith(expectedReply)
   })
