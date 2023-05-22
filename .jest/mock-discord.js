@@ -3,13 +3,13 @@ const { ChannelType, ChannelFlagsBitField, PermissionOverwriteManager, Client, G
 
 
 const channel = {
-  createdAt: new Date(0),
-  createdTimestamp: 0,
+  // createdAt: new Date(0),
+  // createdTimestamp: 0,
   id: '0',
   // flags: ChannelFlagsBitField,
-  partial: false,
+  // partial: false,
   type: ChannelType.GuildText,
-  url: 'https://discord.com/channels/0/0',
+  // url: 'https://discord.com/channels/0/0',
   delete: jest.fn(),
   fetch: jest.fn(),
   isThread: jest.fn(),
@@ -20,31 +20,28 @@ const channel = {
   // Guild Channels
   memberPermissions: jest.fn(),
   rolePermissions: jest.fn(),
-  deletable: true,
+  // deletable: true,
   guild: null,
   guildId: '',
-  manageable: true,
-  members: [],
+  // manageable: true,
+  // members: [],
   name: '',
-  parent: null,
+  // parent: null,
   parentId: null,
   // permissionOverwrites: PermissionOverwriteManager,
-  permissionsLocked: jest.fn(),
-  position: 0,
+  // permissionsLocked: jest.fn(),
+  // position: 0,
   rawPosition: 0,
-  viewable: true,
+  // viewable: true,
   clone: jest.fn(),
-  delete: jest.fn(),
   edit: jest.fn(),
   equals: jest.fn(),
   lockPermissions: jest.fn(),
   permissionsFor: jest.fn(),
-  permissionsFor: jest.fn(),
   setName: jest.fn(),
   setParent: jest.fn(),
   setPosition: jest.fn(),
-  isTextBased: jest.fn(),
-  toString: jest.fn()
+  isTextBased: jest.fn()
 }
 
 /**
@@ -56,6 +53,7 @@ function createChannel (guild, options = {}, client) {
   const id = options.id || Date.now().toString()
   const config = Object.assign({}, channel, options, { id })
   const result = new GuildChannel(guild, config, client)
+  Object.assign(result, config)
   return result
 }
 

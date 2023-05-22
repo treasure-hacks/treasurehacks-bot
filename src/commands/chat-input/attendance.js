@@ -64,7 +64,7 @@ module.exports = {
       case 'record': return recordAttendance(interaction, client, false)
     }
   },
-  // expose for tests
+  // Expose for tests
   recordAttendance,
   listAttendance
 }

@@ -185,5 +185,9 @@ module.exports = {
       case 'sync': return syncCategory(interaction, client)
       case 'teams': return teamCategory(interaction, client)
     }
-  }
+  },
+  // Expose for tests
+  clearCategory,
+  syncCategory,
+  teamCategory
 }

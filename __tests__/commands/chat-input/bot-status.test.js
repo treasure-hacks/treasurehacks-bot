@@ -1,5 +1,5 @@
-// Mocks must come before command imports
 const { ActivityType } = require('discord.js')
+// Mocks must come before command imports
 const discordMock = require('../../../.jest/mock-discord')
 // Command Imports must come after mocks
 const { setBotStatus } = require('../../../src/commands/chat-input/bot-status')
