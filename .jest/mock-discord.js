@@ -1,4 +1,5 @@
-const { ChannelType, ChannelFlagsBitField, PermissionOverwriteManager, Client, Guild, BaseInteraction, User, GuildChannel, ChatInputCommandInteraction, ClientUser
+const { ChannelType, Client, Guild, BaseInteraction, User,
+  GuildChannel, ClientUser, Role, GuildMember, GuildMemberRoleManager
 } = require("discord.js")
 
 
@@ -184,11 +185,43 @@ const guild = {
   setPremiumProgressBarEnabled: jest.fn(),
   setWidgetSettings: jest.fn(),
   setMFALevel: jest.fn(),
-  toJSON: jest.fn(),
+  toJSON: jest.fn()
+}
+const guildMemberManager = {
+  add: jest.fn(),
+  ban: jest.fn(),
+  edit: jest.fn(),
+  fetch: jest.fn(),
+  fetch: jest.fn(),
+  fetchMe: jest.fn(),
+  kick: jest.fn(),
+  list: jest.fn(),
+  prune: jest.fn(),
+  prune: jest.fn(),
+  search: jest.fn(),
+  unban: jest.fn(),
+  addRole: jest.fn(),
+  removeRole: jest.fn()
+}
+const guildChannelManager = {
+  addFollower: jest.fn(),
+  create: jest.fn(),
+  createWebhook: jest.fn(),
+  edit: jest.fn(),
+  fetch: jest.fn(),
+  fetchWebhooks: jest.fn(),
+  setPosition: jest.fn(),
+  setPositions: jest.fn(),
+  fetchActiveThreads: jest.fn(),
+  delete: jest.fn(),
 }
 function createGuild(client, options = {}) {
   const result = new Guild(client, { makeCache: jest.fn() })
   Object.assign(result, guild, options)
+  const everyoneRole = createRole(client, { id: result.id, name: '@everyone' }, guild)
+  result.roles.cache.set(everyoneRole.id, everyoneRole)
+  Object.assign(result.members, guildMemberManager)
+  Object.assign(result.channels, guildChannelManager)
   return result
 }
 
@@ -252,9 +285,83 @@ function createInteraction (client, options = {}, userData = {}) {
   return result
 }
 
+const role = {
+  comparePositionTo: jest.fn(),
+  delete: jest.fn(),
+  edit: jest.fn(),
+  equals: jest.fn(),
+  iconURL: jest.fn(),
+  permissionsIn: jest.fn(),
+  setColor: jest.fn(),
+  setHoist: jest.fn(),
+  setMentionable: jest.fn(),
+  setName: jest.fn(),
+  setPermissions: jest.fn(),
+  setIcon: jest.fn(),
+  setPosition: jest.fn(),
+  setUnicodeEmoji: jest.fn(),
+  toJSON: jest.fn(),
+  toString: jest.fn()
+}
+function createRole (client, options = {}, guild) {
+  const result = new Role(client, options, guild)
+  Object.assign(result, role)
+  return result
+}
+
+const user = {
+  avatarURL: jest.fn(),
+  bannerURL: jest.fn(),
+  createDM: jest.fn(),
+  deleteDM: jest.fn(),
+  displayAvatarURL: jest.fn(),
+  equals: jest.fn(),
+  fetch: jest.fn(),
+  fetchFlags: jest.fn(),
+  toString: jest.fn()
+}
+function createUser (client, options = {}) {
+  const result = new User(client, options)
+  Object.assign(result, user)
+  return result
+}
+
+const member = {
+  ...user,
+  // Guild Members
+  ban: jest.fn(),
+  disableCommunicationUntil: jest.fn(),
+  timeout: jest.fn(),
+  displayAvatarURL: jest.fn(),
+  edit: jest.fn(),
+  isCommunicationDisabled: jest.fn(),
+  kick: jest.fn(),
+  permissionsIn: jest.fn(),
+  setFlags: jest.fn(),
+  setNickname: jest.fn(),
+  toJSON: jest.fn(),
+  toString: jest.fn(),
+  valueOf: jest.fn()
+}
+const roleManager = {
+  add: jest.fn(),
+  set: jest.fn(),
+  remove: jest.fn()
+}
+function createMember (client, options = {}, guild) {
+  const result = new GuildMember(client, options, guild)
+  result.roles = new GuildMemberRoleManager(result)
+  Object.assign(result.roles, roleManager)
+  Object.assign(result, member)
+  return result
+}
+
 module.exports = {
   channel, createChannel,
   client, createClient,
   guild, createGuild,
-  interaction, createInteraction
+  interaction, createInteraction,
+  role, createRole,
+  user, createUser,
+  member, createMember
 }
