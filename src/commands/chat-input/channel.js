@@ -8,8 +8,7 @@ const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlag
  */
 async function archiveChannel (interaction, client) {
   // Refresh the channel
-  let channel = await interaction.guild.channels.fetch(interaction.channelId)
-  if (channel.isThread()) channel = await interaction.guild.channels.fetch(interaction.channel.parentId)
+  const channel = await interaction.guild.channels.fetch(interaction.channelId)
   if (!channel.permissionOverwrites) return interaction.reply({ content: 'Error: Cannot change permissions for channel type', ephemeral: true })
 
   const sync = interaction.options.getBoolean('sync') || false
@@ -62,8 +61,7 @@ async function archiveChannel (interaction, client) {
  * @param {Client} client The discord bot client
  */
 async function syncChannel (interaction, client, reply) {
-  let channel = await interaction.guild.channels.fetch(interaction.channelId)
-  if (channel.isThread()) channel = await interaction.guild.channels.fetch(interaction.channel.parentId)
+  const channel = await interaction.guild.channels.fetch(interaction.channelId)
   if (!channel.permissionOverwrites) return interaction.reply({ content: 'Error: Cannot change permissions for channel type', ephemeral: true })
 
   await channel.lockPermissions()
@@ -95,5 +93,8 @@ module.exports = {
       case 'archive': return archiveChannel(interaction, client)
       case 'sync': return syncChannel(interaction, client)
     }
-  }
+  },
+  // Expose for tests
+  archiveChannel,
+  syncChannel
 }

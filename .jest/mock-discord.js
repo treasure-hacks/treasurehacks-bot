@@ -1,5 +1,6 @@
+const { PermissionOverwrites, PermissionsBitField, RoleManager } = require("discord.js")
 const { ChannelType, Client, Guild, BaseInteraction, User,
-  GuildChannel, ClientUser, Role, GuildMember, GuildMemberRoleManager
+  GuildChannel, ClientUser, Role, GuildMember, GuildMemberRoleManager, PermissionOverwriteManager
 } = require("discord.js")
 
 
@@ -17,7 +18,7 @@ const channel = {
   isTextBased: jest.fn(),
   isDMBased: jest.fn(),
   isVoiceBased: jest.fn(),
-  toString: jest.fn(),
+  toString: jest.fn().mockImplementation(function () { return `<#${this.id}>` }),
   // Guild Channels
   memberPermissions: jest.fn(),
   rolePermissions: jest.fn(),
@@ -42,7 +43,30 @@ const channel = {
   setName: jest.fn(),
   setParent: jest.fn(),
   setPosition: jest.fn(),
-  isTextBased: jest.fn()
+  isTextBased: jest.fn(),
+  send: jest.fn()
+}
+const permissionOverwriteManager = {
+  set: jest.fn(),
+  create: jest.fn(),
+  edit: jest.fn(),
+  delete: jest.fn()
+}
+const permissionsBitField = {
+  any: jest.fn(),
+  has: jest.fn(),
+  missing: jest.fn(),
+  serialize: jest.fn(),
+  toArray: jest.fn()
+}
+const permissionOverwrites = {
+  edit: jest.fn(),
+  delete: jest.fn(),
+  toJSON: jest.fn(),
+  resolveOverwriteOptions: jest.fn(),
+  resolve: jest.fn(),
+  allow: { ...permissionsBitField },
+  deny: { ...permissionsBitField }
 }
 
 /**
@@ -54,7 +78,13 @@ function createChannel (guild, options = {}, client) {
   const id = options.id || Date.now().toString()
   const config = Object.assign({}, channel, options, { id })
   const result = new GuildChannel(guild, config, client)
+  Object.assign(result.permissionOverwrites, permissionOverwriteManager)
   Object.assign(result, config)
+  return result
+}
+function createPermissionOverwrites(client, channel, options = {}) {
+  const result = new PermissionOverwrites(client, options, channel)
+  Object.assign(result, permissionOverwrites)
   return result
 }
 
@@ -192,7 +222,6 @@ const guildMemberManager = {
   ban: jest.fn(),
   edit: jest.fn(),
   fetch: jest.fn(),
-  fetch: jest.fn(),
   fetchMe: jest.fn(),
   kick: jest.fn(),
   list: jest.fn(),
@@ -215,12 +244,24 @@ const guildChannelManager = {
   fetchActiveThreads: jest.fn(),
   delete: jest.fn(),
 }
+const roleManager = {
+  botRoleFor: jest.fn(),
+  fetch: jest.fn(),
+  create: jest.fn(),
+  edit: jest.fn(),
+  delete: jest.fn(),
+  setPosition: jest.fn(),
+  setPositions: jest.fn(),
+  comparePositions: jest.fn()
+}
 function createGuild(client, options = {}) {
   const result = new Guild(client, { makeCache: jest.fn() })
   Object.assign(result, guild, options)
-  const everyoneRole = createRole(client, { id: result.id, name: '@everyone' }, guild)
+  const ev = options.everyoneRole || {}
+  const everyoneRole = createRole(client, { id: result.id, name: '@everyone', ...ev }, guild)
   result.roles.cache.set(everyoneRole.id, everyoneRole)
   Object.assign(result.members, guildMemberManager)
+  Object.assign(result.roles, roleManager)
   Object.assign(result.channels, guildChannelManager)
   return result
 }
@@ -301,7 +342,7 @@ const role = {
   setPosition: jest.fn(),
   setUnicodeEmoji: jest.fn(),
   toJSON: jest.fn(),
-  toString: jest.fn()
+  toString: jest.fn().mockImplementation(function () { return `<@&${this.id}>` })
 }
 function createRole (client, options = {}, guild) {
   const result = new Role(client, options, guild)
@@ -318,7 +359,7 @@ const user = {
   equals: jest.fn(),
   fetch: jest.fn(),
   fetchFlags: jest.fn(),
-  toString: jest.fn()
+  toString: jest.fn().mockImplementation(function () { return `<@${this.id}>` })
 }
 function createUser (client, options = {}) {
   const result = new User(client, options)
@@ -340,10 +381,10 @@ const member = {
   setFlags: jest.fn(),
   setNickname: jest.fn(),
   toJSON: jest.fn(),
-  toString: jest.fn(),
+  toString: jest.fn().mockImplementation(function () { return `<@${this.id}>` }),
   valueOf: jest.fn()
 }
-const roleManager = {
+const gmRoleManager = {
   add: jest.fn(),
   set: jest.fn(),
   remove: jest.fn()
@@ -351,13 +392,14 @@ const roleManager = {
 function createMember (client, options = {}, guild) {
   const result = new GuildMember(client, options, guild)
   result.roles = new GuildMemberRoleManager(result)
-  Object.assign(result.roles, roleManager)
+  Object.assign(result.roles, gmRoleManager)
   Object.assign(result, member)
   return result
 }
 
 module.exports = {
   channel, createChannel,
+  permissionOverwrites, createPermissionOverwrites,
   client, createClient,
   guild, createGuild,
   interaction, createInteraction,
