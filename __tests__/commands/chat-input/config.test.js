@@ -227,5 +227,3 @@ describe('Update Feature Config', () => {
     expect(detaMock.Base.put).toBeCalledWith(expectedConfig)
   })
 })
-
-// more stuff
