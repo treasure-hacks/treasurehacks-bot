@@ -308,6 +308,7 @@ const interaction = {
     getInteger: jest.fn(),
     getRole: jest.fn(),
     getBoolean: jest.fn(),
+    getSubcommand: jest.fn()
   },
   // Chat Input Command Interactions
   deferReply: jest.fn(),

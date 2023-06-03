@@ -15,7 +15,6 @@ const channels = [
 ]
 guild.channels.cache.set(category.id, category)
 channels.forEach(c => guild.channels.cache.set(c.id, c))
-discordMock.interaction.options.getChannel.mockReturnValue(category)
 
 describe('Channel Archive Command', () => {
   beforeAll(() => {
