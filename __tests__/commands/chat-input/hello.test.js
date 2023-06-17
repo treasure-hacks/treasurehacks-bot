@@ -5,10 +5,7 @@ const { greetings, sayHello } = require('../../../src/commands/chat-input/hello'
 
 const client = discordMock.createClient({}, [])
 const interaction = discordMock.createInteraction(client)
-
-function resolveTo (value) {
-  return new Promise(resolve => resolve(value))
-}
+const { resolveTo } = discordMock
 
 describe('Hello Command', () => {
   beforeAll(() => {

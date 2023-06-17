@@ -4,6 +4,10 @@ const { ChannelType, Client, Guild, BaseInteraction, User,
 } = require("discord.js")
 
 
+function resolveTo (value) {
+  return new Promise(resolve => resolve(value))
+}
+
 const channel = {
   // createdAt: new Date(0),
   // createdTimestamp: 0,
@@ -406,5 +410,6 @@ module.exports = {
   interaction, createInteraction,
   role, createRole,
   user, createUser,
-  member, createMember
+  member, createMember,
+  resolveTo
 }
