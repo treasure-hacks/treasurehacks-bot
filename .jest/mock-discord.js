@@ -1,4 +1,4 @@
-const { PermissionOverwrites, PermissionsBitField, RoleManager } = require("discord.js")
+const { PermissionOverwrites, PermissionsBitField, RoleManager, PermissionFlagsBits } = require("discord.js")
 const { ChannelType, Client, Guild, BaseInteraction, User,
   GuildChannel, ClientUser, Role, GuildMember, GuildMemberRoleManager, PermissionOverwriteManager
 } = require("discord.js")
@@ -262,7 +262,8 @@ function createGuild(client, options = {}) {
   const result = new Guild(client, { makeCache: jest.fn() })
   Object.assign(result, guild, options)
   const ev = options.everyoneRole || {}
-  const everyoneRole = createRole(client, { id: result.id, name: '@everyone', ...ev }, guild)
+  const permissions = new PermissionsBitField(PermissionFlagsBits.ViewChannel)
+  const everyoneRole = createRole(client, { id: result.id, name: '@everyone', permissions, ...ev }, guild)
   result.roles.cache.set(everyoneRole.id, everyoneRole)
   Object.assign(result.members, guildMemberManager)
   Object.assign(result.roles, roleManager)

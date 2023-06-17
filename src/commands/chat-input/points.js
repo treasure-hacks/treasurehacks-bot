@@ -53,5 +53,7 @@ module.exports = {
     .setDescription('Gets the number of points you have in the server'),
   execute: async (interaction, client) => {
     return respondWithPoints(interaction, client)
-  }
+  },
+  // Expose for tests
+  respondWithPoints
 }
