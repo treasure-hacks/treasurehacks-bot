@@ -33,5 +33,7 @@ module.exports = {
     ),
   execute: async (interaction, client) => {
     generateTimestamp(interaction, client)
-  }
+  },
+  // Expose for tests
+  generateTimestamp
 }
