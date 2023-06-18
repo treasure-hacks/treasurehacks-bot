@@ -19,6 +19,7 @@ async function mergePeople (interaction, client, delay = 15) {
   const states = interaction.guild.voiceStates.cache.map(vs => vs)
     .filter(vs => !category || vs.channel.parentId === category.id)
     .filter(vs => vs.channel && vs.channel.id !== channel.id)
+
   const members = states.map(vs => vs.member)
   const channels = [...new Set(states.map(s => s.channel))]
   const peopleText = members.length + (members.length === 1 ? ' member' : ' members')
@@ -56,5 +57,7 @@ module.exports = {
     ),
   execute: async (interaction, client) => {
     return mergePeople(interaction, client)
-  }
+  },
+  // Expose for tests
+  mergePeople
 }
