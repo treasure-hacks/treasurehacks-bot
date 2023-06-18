@@ -211,5 +211,10 @@ module.exports = {
       case 'ignored-roles': return updateIgnoredRoles(interaction, client)
       case 'status': return replyWithStatus(interaction, client)
     }
-  }
+  },
+  // Expose for tests
+  setScannerStatus,
+  setMaxUserAge,
+  updateIgnoredRoles,
+  replyWithStatus
 }
