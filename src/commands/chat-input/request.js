@@ -36,8 +36,7 @@ async function makeChannelRequest (interaction, client) {
   members.unshift(interaction.member.toString())
   const uniqueMembers = [...new Set(members)]
 
-  const channels = await interaction.guild.channels.fetch()
-  const alertsChannel = channels.get(alertsChannelID)
+  const alertsChannel = await interaction.guild.channels.fetch(alertsChannelID)
   const fields = [
     { name: 'Reason', value: interaction.options.getString('reason') },
     { name: 'Team Name', value: name, inline: true },
@@ -98,17 +97,9 @@ module.exports = {
       .setDescription('The reason you are requesting the group, or the question that you have to ask privately.')
       .setRequired(true)
     ),
-  // .addSubcommand(subcommand => {
-  //   subcommand.setName('link-scanner').setDescription('Configure automatic malware and scam link removal')
-  //     .addBooleanOption(option => option
-  //       .setName('enabled')
-  //       .setDescription('Whether to enable automatic malware and scam link removal')
-  //     )
-  //   return subcommand
-  // }),
-  // userPermissions: ['ADMINISTRATOR'],
-  // defaultMemberPermissions: 8,
   execute: async (interaction, client) => {
     makeChannelRequest(interaction, client)
-  }
+  },
+  // Expose for tests
+  makeChannelRequest
 }

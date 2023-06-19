@@ -37,9 +37,10 @@ async function scanMessage (message) {
       role: 'system',
       content: 'Each user message is provided in its entirety. A crypto scam always consists of the following: ' +
         'first, a scammer saying that they earned or made a certain amount of money either in a short time or from ' +
-        'a market of some sort and second, asking the target user to reach out to them. Determine whether the following ' +
-        'messages are crypto scams. Respond in 1 word only: "yes" or "no". If the user\'s message is definitely a crypto scam, ' +
-        'respond "yes". In all other circumstances (including asking questions about a crypto scam or having insufficient information) respond "no"'
+        'a market of some sort and second, asking the target user to reach out to them. Determine whether the ' +
+        'following messages are crypto scams. Respond in 1 word only: "yes" or "no". If the user\'s message is ' +
+        'definitely a crypto scam, respond "yes". In all other circumstances (including asking questions ' +
+        'about a crypto scam or having insufficient information) respond "no".\n\n'
     },
     { role: 'user', content: message.cleanContent }
   ]

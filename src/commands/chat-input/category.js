@@ -103,11 +103,12 @@ async function teamCategory (interaction, client) {
       ]
     })
   }
-  teams.forEach(async (team, index) => {
-    index += 1
+  for (let index in teams) {
+    const team = teams[index]
+    index++ // Start at 1
     if (channelType !== 'voice') await createChannel('team-' + index, ChannelType.GuildText, team)
     if (channelType !== 'text') await createChannel('team-' + index, ChannelType.GuildVoice, team)
-  })
+  }
   const readableType = ({
     text: 'Text',
     voice: 'Voice',
@@ -185,5 +186,9 @@ module.exports = {
       case 'sync': return syncCategory(interaction, client)
       case 'teams': return teamCategory(interaction, client)
     }
-  }
+  },
+  // Expose for tests
+  clearCategory,
+  syncCategory,
+  teamCategory
 }

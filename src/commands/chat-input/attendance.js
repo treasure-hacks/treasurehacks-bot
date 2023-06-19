@@ -29,6 +29,10 @@ async function recordAttendance (interaction, client) {
 
 async function listAttendance (interaction, client) {
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
+  if (!serverConfig?.attendance || Object.entries(serverConfig.attendance).length === 0) {
+    return interaction.reply({ content: 'Error: Nothing to take attendance for', ephemeral: true })
+  }
+
   const replyString = Object.entries(serverConfig.attendance).map(([key, value]) => {
     return `__**${key}:**__ ${value.length}`
   }).join('\n')
@@ -59,5 +63,8 @@ module.exports = {
       case 'list': return listAttendance(interaction, client, true)
       case 'record': return recordAttendance(interaction, client, false)
     }
-  }
+  },
+  // Expose for tests
+  recordAttendance,
+  listAttendance
 }

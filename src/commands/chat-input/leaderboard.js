@@ -64,7 +64,10 @@ async function deleteLeaderboard (interaction, client) {
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
   const { leaderboards } = serverConfig
   if (!leaderboards || !leaderboards[name]) {
-    return interaction.reply(`No such leaderboard with name ${name} exists`)
+    return interaction.reply({
+      content: `No such leaderboard with name ${name} exists`,
+      ephemeral: true
+    })
   }
 
   const leaderboard = leaderboards[name]
@@ -269,6 +272,13 @@ async function resetLeaderboard (interaction, client) {
   const name = interaction.options.getString('name')
   const serverConfig = await serverSettingsDB.get(interaction.guild.id)
   const leaderboard = await getLeaderboard(serverConfig, name)
+  if (!leaderboard) {
+    return interaction.reply({
+      content: `No such leaderboard with name ${name} exists`,
+      ephemeral: true
+    })
+  }
+
   const replyContent = 'Old Leaderboard Content:\n\n' + generateLeaderboardPost(leaderboard)
 
   leaderboard.scores = {}
@@ -395,5 +405,13 @@ module.exports = {
       case 'list': return listLeaderboards(interaction, client)
       case 'reset': return resetLeaderboard(interaction, client)
     }
-  }
+  },
+  // Expose for tests
+  createLeaderboard,
+  deleteLeaderboard,
+  repostLeaderboard,
+  updatePostsLeaderboard,
+  updateUsersLeaderboard,
+  listLeaderboards,
+  resetLeaderboard
 }

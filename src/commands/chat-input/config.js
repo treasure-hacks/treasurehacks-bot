@@ -4,6 +4,7 @@ const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
 
+/** @todo move this somewhere else */
 function dashedToCamelCase (str) {
   return str.replace(/-\w/g, m0 => m0[1].toUpperCase())
 }
@@ -222,5 +223,10 @@ module.exports = {
       case 'alerts': return setAlerts(interaction, client)
       case 'channel-request': return updateFeatureConfig(interaction, client)
     }
-  }
+  },
+  // Expose for tests
+  setLog,
+  setAlerts,
+  getFeatureConfig,
+  updateFeatureConfig
 }
