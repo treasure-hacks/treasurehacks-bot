@@ -76,7 +76,7 @@ async function approveRequest (interaction) {
   const nameField = fields.find(f => f.name === 'Team Name')
   const category = serverConfig.channelRequest?.category
   const channel = await interaction.guild.channels.create({
-    name: 'team-' + nameField.value,
+    name: nameField.value,
     type: ChannelType.GuildText,
     parent: category
   })
