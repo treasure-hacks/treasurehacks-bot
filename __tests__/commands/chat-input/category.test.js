@@ -6,6 +6,7 @@ const { clearCategory, syncCategory, teamCategory } = require('../../../src/comm
 
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: 'g1' })
+client.guilds.cache.set(guild.id, guild)
 const category = discordMock.createChannel(guild, { id: '1', type: ChannelType.GuildCategory, name: 'cat' })
 const channels = [
   discordMock.createChannel(guild, { id: '2', parentId: '1', name: 'test-channel' }, client),
@@ -17,8 +18,11 @@ const channels = [
 ]
 const deleteFn = channels[0].delete
 guild.channels.cache.set(category.id, category)
-channels.forEach(c => guild.channels.cache.set(c.id, c))
-discordMock.interaction.options.getChannel.mockReturnValue(category)
+client.channels.cache.set(category.id, category)
+channels.forEach(c => {
+  guild.channels.cache.set(c.id, c)
+  client.channels.cache.set(c.id, c)
+})
 
 describe('Category Clear Command', () => {
   beforeEach(() => {
@@ -34,19 +38,22 @@ describe('Category Clear Command', () => {
       ephemeral: true
     }
     const interaction = discordMock.createInteraction(client, { guild })
+    interaction.options.getChannel.mockReturnValueOnce(category)
     clearCategory(interaction, client)
     expect(interaction.reply).toBeCalledWith(expectedReply)
   })
 
   it('Calls delete once for each channel it is deleting and no more', () => {
     const interaction = discordMock.createInteraction(client, { guild })
+    interaction.options.getChannel.mockReturnValueOnce(category)
     clearCategory(interaction, client)
     expect(deleteFn).toBeCalledTimes(4) // 2, 3, 4, 5
   })
 
   it('Calls delete for every channel, plus one for category if specified', () => {
     const interaction = discordMock.createInteraction(client, { guild })
-    discordMock.interaction.options.getBoolean.mockReturnValueOnce(true)
+    interaction.options.getChannel.mockReturnValueOnce(category)
+    interaction.options.getBoolean.mockReturnValueOnce(true)
     clearCategory(interaction, client)
     expect(deleteFn).toBeCalledTimes(5) // 2, 3, 4, 5, 1
   })
@@ -68,12 +75,14 @@ describe('Category Sync Command', () => {
       ephemeral: true
     }
     const interaction = discordMock.createInteraction(client, { guild })
+    interaction.options.getChannel.mockReturnValueOnce(category)
     syncCategory(interaction, client)
     expect(interaction.reply).toBeCalledWith(expectedReply)
   })
 
   it('Calls lockPermissions once for every channel in the category', () => {
     const interaction = discordMock.createInteraction(client, { guild })
+    interaction.options.getChannel.mockReturnValueOnce(category)
     syncCategory(interaction, client)
     expect(channels[0].lockPermissions).toBeCalledTimes(4) // 2, 3, 4, 5
   })
@@ -127,7 +136,7 @@ describe('Category Teams Command', () => {
     })
 
     this.interaction = discordMock.createInteraction(client, { guild })
-    discordMock.interaction.options.getChannel.mockReturnValue(category)
+    this.interaction.options.getChannel.mockReturnValue(category)
 
     jest.spyOn(Array.prototype, 'sort').mockImplementation(function () { return this })
   })
@@ -144,16 +153,16 @@ describe('Category Teams Command', () => {
   })
 
   it('Refreshes the guild\'s members', async () => {
-    discordMock.interaction.options.getRole.mockReturnValue(this.emptyRole) // role
-    discordMock.interaction.options.getInteger.mockReturnValue(1) // size
+    this.interaction.options.getRole.mockReturnValue(this.emptyRole) // role
+    this.interaction.options.getInteger.mockReturnValue(1) // size
 
     await teamCategory(this.interaction, client)
     expect(guild.members.fetch).toBeCalled()
   })
 
   it('Replies with error when there are no users in the role', async () => {
-    discordMock.interaction.options.getRole.mockReturnValue(this.emptyRole) // role
-    discordMock.interaction.options.getInteger.mockReturnValue(1) // size
+    this.interaction.options.getRole.mockReturnValue(this.emptyRole) // role
+    this.interaction.options.getInteger.mockReturnValue(1) // size
     const expectedReply = {
       embeds: [{
         title: 'Error',
@@ -168,16 +177,16 @@ describe('Category Teams Command', () => {
   })
 
   it('Defers the reply when creating channels', async () => {
-    discordMock.interaction.options.getRole.mockReturnValue(this.role) // role
-    discordMock.interaction.options.getInteger.mockReturnValue(1) // size
+    this.interaction.options.getRole.mockReturnValue(this.role) // role
+    this.interaction.options.getInteger.mockReturnValue(1) // size
 
     await teamCategory(this.interaction, client)
     expect(this.interaction.deferReply).toBeCalled()
   })
 
   it('Creates the correct channel types for teams', async () => {
-    discordMock.interaction.options.getRole.mockReturnValue(this.role) // role
-    discordMock.interaction.options.getInteger.mockReturnValue(1) // size
+    this.interaction.options.getRole.mockReturnValue(this.role) // role
+    this.interaction.options.getInteger.mockReturnValue(1) // size
     guild.channels.create.mockImplementation(x => x) // return the param
 
     const expectedChannels = {
@@ -201,25 +210,25 @@ describe('Category Teams Command', () => {
       ]
     }
 
-    discordMock.interaction.options.getString.mockReturnValue('text') // channelType
+    this.interaction.options.getString.mockReturnValue('text') // channelType
     await teamCategory(this.interaction, client)
     expect(getCreateChannelReturns()).toEqual(expectedChannels.text)
     guild.channels.create.mockClear()
 
-    discordMock.interaction.options.getString.mockReturnValue('voice') // channelType
+    this.interaction.options.getString.mockReturnValue('voice') // channelType
     await teamCategory(this.interaction, client)
     expect(getCreateChannelReturns()).toEqual(expectedChannels.voice)
     guild.channels.create.mockClear()
 
-    discordMock.interaction.options.getString.mockReturnValue('both') // channelType
+    this.interaction.options.getString.mockReturnValue('both') // channelType
     await teamCategory(this.interaction, client)
     expect(getCreateChannelReturns()).toEqual(expectedChannels.both)
   })
 
   it('Responds with the correct embed for channels created', async () => {
-    discordMock.interaction.options.getRole.mockReturnValue(this.role) // role
-    discordMock.interaction.options.getInteger.mockReturnValue(1) // size
-    discordMock.interaction.options.getString.mockReturnValue('both') // channelType
+    this.interaction.options.getRole.mockReturnValue(this.role) // role
+    this.interaction.options.getInteger.mockReturnValue(1) // size
+    this.interaction.options.getString.mockReturnValue('both') // channelType
     guild.channels.create.mockImplementation(x => x) // return the param
 
     const expectedReply = {
@@ -236,9 +245,9 @@ describe('Category Teams Command', () => {
   })
 
   it('Splits unevenly-sized groups correctly', async () => {
-    discordMock.interaction.options.getRole.mockReturnValue(this.role) // role
-    discordMock.interaction.options.getInteger.mockReturnValue(2) // size
-    discordMock.interaction.options.getString.mockReturnValue('both') // channelType
+    this.interaction.options.getRole.mockReturnValue(this.role) // role
+    this.interaction.options.getInteger.mockReturnValue(2) // size
+    this.interaction.options.getString.mockReturnValue('both') // channelType
     guild.channels.create.mockImplementation(x => x) // return the param
 
     const expectedReply = {

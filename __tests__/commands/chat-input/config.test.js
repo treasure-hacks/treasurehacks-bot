@@ -7,16 +7,21 @@ const { setLog, setAlerts, getFeatureConfig, updateFeatureConfig } = require('..
 
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: 'g1' })
+client.guilds.cache.set(guild.id, guild)
 const category = discordMock.createChannel(guild, { id: '1', type: ChannelType.GuildCategory, name: 'category' })
 const channel = discordMock.createChannel(guild, { id: '2', guild, name: 'main' }, client)
 guild.channels.cache.set(category.id, category)
 guild.channels.cache.set(channel.id, channel)
-discordMock.interaction.options.getChannel.mockReturnValue(channel)
 detaMock.Base.get.mockReturnValue({}) // make it completely empty
 
 describe('Config Set Log Channel Command', () => {
   beforeAll(() => {
     this.interaction = discordMock.createInteraction(client, { guild })
+    this.interaction.options.getChannel.mockReturnValue(channel)
+  })
+
+  beforeEach(() => {
+    this.interaction.options.getChannel.mockClear()
   })
 
   it('Replies with an error if the specified channel cannot be found', async () => {
@@ -60,6 +65,11 @@ describe('Config Set Log Channel Command', () => {
 describe('Config Set Alerts Channel Command', () => {
   beforeAll(() => {
     this.interaction = discordMock.createInteraction(client, { guild })
+    this.interaction.options.getChannel.mockReturnValue(channel)
+  })
+
+  beforeEach(() => {
+    this.interaction.options.getChannel.mockClear()
   })
 
   it('Replies with an error if the specified channel cannot be found', async () => {
@@ -106,7 +116,7 @@ describe('Config Set Alerts Channel Command', () => {
     }
     await setAlerts(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith({ embeds: [expectedEmbed], ephemeral: false })
-    expect(detaMock.Base.put).toBeCalledWith({ logChannel: '2' })
+    expect(detaMock.Base.put).toBeCalledWith({ alertsChannel: '2' })
   })
 })
 
@@ -158,13 +168,14 @@ describe('Get Feature Config', () => {
 
 describe('Update Feature Config', () => {
   beforeAll(() => {
-    this.interaction = discordMock.createInteraction(client, { guild })
+    this.command = { name: 'feature', type: 1, options: [] }
+    Object.defineProperty(this, 'interaction', {
+      get: () => discordMock.createInteraction(client, { guild, options: [this.command], resolved: [this.command] })
+    })
     this.interaction.options.getSubcommand.mockReturnValue('feature')
     detaMock.Base.get.mockReturnValue({
       feature: { enabled: true, channel: 'channel', category: 'cat', foo: 'bar' }
     })
-    this.command = { name: 'feature', type: 1, options: [] }
-    this.interaction.options.data = [this.command]
   })
   beforeEach(() => {
     detaMock.Base.get.mockClear()
@@ -173,10 +184,10 @@ describe('Update Feature Config', () => {
 
   afterAll(() => {
     detaMock.Base.get.mockReset()
-    this.interaction.options.getSubcommand.mockReset()
+    this.interaction.options.getSubcommand.mockClear()
   })
   afterEach(() => {
-    this.interaction.reply.mockReset()
+    this.interaction.reply.mockClear()
   })
 
   it('Replies with the current config if no options are specified', async () => {

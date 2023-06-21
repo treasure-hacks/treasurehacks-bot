@@ -1,7 +1,8 @@
-const { PermissionOverwrites, PermissionsBitField, RoleManager, PermissionFlagsBits, BaseGuildTextChannel, TextChannel, VoiceChannel, StageChannel, ForumChannel, DirectoryChannel, CategoryChannel, PartialTextBasedChannel, BaseGuildVoiceChannel, GuildMemberManager, GuildChannelManager, BaseGuild } = require("discord.js")
+const { PermissionOverwrites, PermissionsBitField, RoleManager, PermissionFlagsBits, BaseGuildTextChannel, TextChannel, VoiceChannel, StageChannel, ForumChannel, DirectoryChannel, CategoryChannel, PartialTextBasedChannel, BaseGuildVoiceChannel, GuildMemberManager, GuildChannelManager, BaseGuild, InteractionType, CommandInteraction, ModalSubmitInteraction, MessageComponentInteraction, ChatInputCommandInteraction, ApplicationCommandType, UserContextMenuCommandInteraction, MessageContextMenuCommandInteraction, Message, CommandInteractionOptionResolver } = require("discord.js")
 const { ChannelType, Client, Guild, BaseInteraction, User,
   GuildChannel, ClientUser, Role, GuildMember, GuildMemberRoleManager, PermissionOverwriteManager
 } = require("discord.js")
+const InteractionResponses = require("discord.js/src/structures/interfaces/InteractionResponses")
 
 
 function resolveTo (value) {
@@ -15,7 +16,7 @@ function mockClass (cls) {
   // console.log(`\x1b[35m${cls.name}\x1b[0m`)
   for (const [name, descriptor] of Object.entries(descriptors)) {
     if (typeof descriptor.value !== 'function') continue
-    if (name.startsWith('_') || name === 'constructor') continue
+    if (name.match(/^_|^transform|^constructor$/)) continue
     // console.log(`  ${name}:`, descriptor.value)
     jest.spyOn(cls.prototype, name)
     cls.prototype[name].mockImplementation(() => {})
@@ -81,65 +82,42 @@ function createGuild(client, options = {}) {
   return result
 }
 
-const interaction = {
-  // applicationId: Snowflake;
-  // channelId: Snowflake | null;
-  // get createdAt(): Date;
-  // get createdTimestamp(): number;
-  // get guild(): CacheTypeReducer<Cached, Guild, null>;
-  // guildId: CacheTypeReducer<Cached, Snowflake>;
-  // id: Snowflake;
-  // member: CacheTypeReducer<Cached, GuildMember, APIInteractionGuildMember>;
-  // readonly token: string;
-  // type: InteractionType;
-  // user: User,
-  // version: number;
-  // appPermissions: Readonly<PermissionsBitField> | null;
-  // memberPermissions: CacheTypeReducer<Cached, Readonly<PermissionsBitField>>;
-  // locale: Locale;
-  // guildLocale: CacheTypeReducer<Cached, Locale>;
-  inGuild: jest.fn(),
-  inCachedGuild: jest.fn(),
-  inRawGuild: jest.fn(),
-  isButton: jest.fn(),
-  isAutocomplete: jest.fn(),
-  isChatInputCommand: jest.fn(),
-  isCommand: jest.fn(),
-  isContextMenuCommand: jest.fn(),
-  isMessageComponent: jest.fn(),
-  isMessageContextMenuCommand: jest.fn(),
-  isModalSubmit: jest.fn(),
-  isUserContextMenuCommand: jest.fn(),
-  isAnySelectMenu: jest.fn(),
-  isStringSelectMenu: jest.fn(),
-  isUserSelectMenu: jest.fn(),
-  isRoleSelectMenu: jest.fn(),
-  isMentionableSelectMenu: jest.fn(),
-  isChannelSelectMenu: jest.fn(),
-  isRepliable: jest.fn(),
-  options: {
-    getString: jest.fn(),
-    getChannel: jest.fn(),
-    getInteger: jest.fn(),
-    getRole: jest.fn(),
-    getBoolean: jest.fn(),
-    getSubcommand: jest.fn()
-  },
-  // Chat Input Command Interactions
-  deferReply: jest.fn(),
-  deleteReply: jest.fn(),
-  editReply: jest.fn(),
-  fetchReply: jest.fn(),
-  followUp: jest.fn(),
-  reply: jest.fn(),
-  showModal: jest.fn(),
-  awaitModalSubmit: jest.fn()
+const interactionType = {
+  [InteractionType.ApplicationCommand]: CommandInteraction,
+  [InteractionType.MessageComponent]: MessageComponentInteraction,
+  [InteractionType.ModalSubmit]: ModalSubmitInteraction
 }
+
+mockClass(CommandInteraction)
+mockClass(InteractionResponses)
+mockClass(ChatInputCommandInteraction)
+mockClass(UserContextMenuCommandInteraction)
+mockClass(MessageContextMenuCommandInteraction)
+mockClass(MessageComponentInteraction)
+mockClass(ModalSubmitInteraction)
+mockClass(CommandInteractionOptionResolver)
+
 function createInteraction (client, options = {}, userData = {}) {
+  const type = options.type || InteractionType.ApplicationCommand
+  const cmdType = options.commandType || ApplicationCommandType.ChatInput
+  
   const user = new User(client, userData)
-  const i = new BaseInteraction(client, { user, ...options, options: interaction.options })
-  const result = Object.assign({}, i, interaction, options)
-  return result
+  const Class = interactionType[type]
+  const interactionData = { user, data: { ...options }, type, ...options }
+  if (type === InteractionType.ApplicationCommand) interactionData.data.type = cmdType
+  let i = new Class(client, interactionData, options.guild, options.guild?.id || options.guildId)
+
+  if (i.isCommand()) {
+    if (i.isChatInputCommand()) i = new ChatInputCommandInteraction(client, interactionData)
+    else if (i.isUserContextMenuCommand()) i = new UserContextMenuCommandInteraction(client, interactionData)
+    else if (i.isMessageContextMenuCommand()) i = new MessageContextMenuCommandInteraction(client, interactionData)
+    i.guildId = options.guild?.id || options.guildId
+    i.channelId = options.channel?.id || options.channelId
+  } else {
+    console.log('is not a command', type, i.isCommand())
+  }
+
+  return i
 }
 
 mockClass(Role)
@@ -174,7 +152,7 @@ module.exports = {
   createPermissionOverwrites,
   createClient,
   createGuild,
-  interaction, createInteraction,
+  createInteraction,
   createRole,
   createUser,
   createMember,

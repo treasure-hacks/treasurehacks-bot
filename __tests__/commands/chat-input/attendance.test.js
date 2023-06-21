@@ -16,7 +16,7 @@ function createVoiceState (channel) {
 const today = new Date().toLocaleDateString()
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: 'g1' })
-discordMock.interaction.options.getString.mockReturnValue('name')
+client.guilds.cache.set(guild.id, guild)
 
 describe('Attendance Record Command', () => {
   it('Replies with error if the current channel is not a voice channel', async () => {
@@ -32,6 +32,7 @@ describe('Attendance Record Command', () => {
     const channel = discordMock.createChannel(guild, { type: ChannelType.GuildVoice })
     client.channels.cache.set(channel.id, channel)
     const interaction = discordMock.createInteraction(client, { guild, channel })
+    interaction.options.getString.mockReturnValue('name')
 
     await recordAttendance(interaction, client)
     expect(guild.fetch).toBeCalled()
@@ -42,6 +43,7 @@ describe('Attendance Record Command', () => {
     const channel = discordMock.createChannel(guild, { type: ChannelType.GuildStageVoice })
     client.channels.cache.set(channel.id, channel)
     const interaction = discordMock.createInteraction(client, { guild, channel })
+    interaction.options.getString.mockReturnValue('name')
 
     await recordAttendance(interaction, client)
     expect(guild.fetch).toBeCalled()
@@ -57,6 +59,7 @@ describe('Attendance Record Command', () => {
     const channel = discordMock.createChannel(guild, { type: ChannelType.GuildVoice })
     client.channels.cache.set(channel.id, channel)
     const interaction = discordMock.createInteraction(client, { guild, channel })
+    interaction.options.getString.mockReturnValue('name')
     guild.voiceStates.cache.set('1', createVoiceState(channel))
 
     await recordAttendance(interaction, client)
@@ -69,6 +72,7 @@ describe('Attendance Record Command', () => {
     const channel = discordMock.createChannel(guild, { type: ChannelType.GuildVoice })
     client.channels.cache.set(channel.id, channel)
     const interaction = discordMock.createInteraction(client, { guild, channel })
+    interaction.options.getString.mockReturnValue('name')
     expectedConfig.attendance = { [today + ' \u2013 name']: ['user-1'] }
 
     guild.voiceStates.cache.set('1', createVoiceState(channel))

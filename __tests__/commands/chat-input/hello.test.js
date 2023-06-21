@@ -12,8 +12,8 @@ describe('Hello Command', () => {
     this.fetch = jest.spyOn(globalThis, 'fetch')
   })
   afterEach(() => {
-    this.fetch.mockReset()
-    interaction.reply.mockReset()
+    this.fetch.mockClear()
+    interaction.reply.mockClear()
   })
 
   it('Responds with just a greeting if it cannot get a random fact', async () => {

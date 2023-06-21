@@ -6,6 +6,7 @@ const { archiveChannel, syncChannel } = require('../../../src/commands/chat-inpu
 
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: 'g1', everyoneRole: { permissions: PermissionFlagsBits.ViewChannel } })
+client.guilds.cache.set(guild.id, guild)
 const category = discordMock.createChannel(guild, { id: '1', type: ChannelType.GuildCategory, name: 'cat' })
 const channels = [
   discordMock.createChannel(guild, { id: '2', guild, parentId: '1', name: 'test-channel1' }, client),
@@ -13,8 +14,8 @@ const channels = [
   discordMock.createChannel(guild, { id: '3a', guild, parentId: '3', name: 'thread', type: ChannelType.PublicThread }, client),
   discordMock.createChannel(guild, { id: '4', guild, parentId: 'g1', name: 'some-channel' }, client)
 ]
-guild.channels.cache.set(category.id, category)
-channels.forEach(c => guild.channels.cache.set(c.id, c))
+client.channels.cache.set(category.id, category)
+channels.forEach(c => client.channels.cache.set(c.id, c))
 
 describe('Channel Archive Command', () => {
   beforeAll(() => {
@@ -35,12 +36,12 @@ describe('Channel Archive Command', () => {
   })
 
   beforeEach(() => {
-    discordMock.interaction.reply.mockReset()
     this.channel.permissionOverwrites.cache.clear()
   })
 
   it('Replies with an error when permissionOverwrites does not exist', async () => {
     const interaction = discordMock.createInteraction(client, { guild, channelId: '3a' })
+    interaction.reply.mockClear()
     guild.channels.fetch.mockReturnValue(channels[2])
     channels[2].permissionOverwrites = null // simulate a channel without permissionOverwrites
     const expectedReply = { content: 'Error: Cannot change permissions for channel type', ephemeral: true }
@@ -53,6 +54,7 @@ describe('Channel Archive Command', () => {
     const interaction = discordMock.createInteraction(client, {
       guild, guildId: guild.id, channel: channels[1], channelId: '3'
     })
+    interaction.reply.mockClear()
     guild.channels.fetch.mockReturnValue(channels[1])
 
     await archiveChannel(interaction, client)
