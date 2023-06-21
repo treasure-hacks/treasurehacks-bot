@@ -56,7 +56,7 @@ describe('Channel Archive Command', () => {
     guild.channels.fetch.mockReturnValue(channels[1])
 
     await archiveChannel(interaction, client)
-    expect(discordMock.channel.lockPermissions).not.toBeCalled()
+    expect(this.channel.lockPermissions).not.toBeCalled()
   })
 
   it('Locks permissions if sync is true', async () => {
@@ -67,7 +67,7 @@ describe('Channel Archive Command', () => {
     interaction.options.getBoolean.mockReturnValue(true)
 
     await archiveChannel(interaction, client)
-    expect(discordMock.channel.lockPermissions).toBeCalled()
+    expect(this.channel.lockPermissions).toBeCalled()
   })
 
   it('Marks the channel as read-only for all non-admin roles', async () => {
@@ -98,7 +98,6 @@ describe('Channel Archive Command', () => {
     this.channel.permissionOverwrites.cache.set(guild.id, this.viewable(guild.id, 0, this.channel, false))
     this.channel.permissionOverwrites.cache.set(this.admin.id, this.viewable(this.admin.id, 0, this.channel))
     guild.roles.fetch.mockImplementation(id => guild.roles.cache.find(r => r.id === id))
-    discordMock.permissionOverwrites.deny.has.mockReturnValueOnce(true)
 
     await archiveChannel(interaction, client)
     expect(interaction.reply).toBeCalledWith({ content: 'No changes were made', ephemeral: true })
@@ -158,7 +157,7 @@ describe('Channel Sync Command', () => {
     guild.channels.fetch.mockReturnValue(channels[0])
 
     await syncChannel(interaction, client)
-    expect(discordMock.channel.lockPermissions).toBeCalled()
+    expect(channels[0].lockPermissions).toBeCalled()
   })
 
   it('Calls lock permissions when syncing permissions', async () => {

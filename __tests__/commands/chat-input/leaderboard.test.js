@@ -1,8 +1,8 @@
-const { ChannelType } = require('discord.js')
 // Mocks must come before command imports
 const discordMock = require('../../../.jest/mock-discord')
 const detaMock = require('../../../.jest/mock-deta')
 // Command Imports must come after mocks
+const { ChannelType } = require('discord.js')
 const {
   createLeaderboard, deleteLeaderboard, repostLeaderboard,
   updatePostsLeaderboard, /* updateUsersLeaderboard, listLeaderboards, */ resetLeaderboard

@@ -1,4 +1,4 @@
-const { PermissionOverwrites, PermissionsBitField, RoleManager, PermissionFlagsBits } = require("discord.js")
+const { PermissionOverwrites, PermissionsBitField, RoleManager, PermissionFlagsBits, BaseGuildTextChannel, TextChannel, VoiceChannel, StageChannel, ForumChannel, DirectoryChannel, CategoryChannel, PartialTextBasedChannel, BaseGuildVoiceChannel } = require("discord.js")
 const { ChannelType, Client, Guild, BaseInteraction, User,
   GuildChannel, ClientUser, Role, GuildMember, GuildMemberRoleManager, PermissionOverwriteManager
 } = require("discord.js")
@@ -8,70 +8,35 @@ function resolveTo (value) {
   return new Promise(resolve => resolve(value))
 }
 
-const channel = {
-  // createdAt: new Date(0),
-  // createdTimestamp: 0,
-  id: '0',
-  // flags: ChannelFlagsBitField,
-  // partial: false,
-  type: ChannelType.GuildText,
-  // url: 'https://discord.com/channels/0/0',
-  delete: jest.fn(),
-  fetch: jest.fn(),
-  isThread: jest.fn(),
-  isTextBased: jest.fn(),
-  isDMBased: jest.fn(),
-  isVoiceBased: jest.fn(),
-  toString: jest.fn().mockImplementation(function () { return `<#${this.id}>` }),
-  // Guild Channels
-  memberPermissions: jest.fn(),
-  rolePermissions: jest.fn(),
-  // deletable: true,
-  guild: null,
-  guildId: '',
-  // manageable: true,
-  // members: [],
-  name: '',
-  // parent: null,
-  parentId: null,
-  // permissionOverwrites: PermissionOverwriteManager,
-  // permissionsLocked: jest.fn(),
-  // position: 0,
-  rawPosition: 0,
-  // viewable: true,
-  clone: jest.fn(),
-  edit: jest.fn(),
-  equals: jest.fn(),
-  lockPermissions: jest.fn(),
-  permissionsFor: jest.fn(),
-  setName: jest.fn(),
-  setParent: jest.fn(),
-  setPosition: jest.fn(),
-  isTextBased: jest.fn(),
-  send: jest.fn()
+
+function mockClass (cls) {
+  if (!cls) return
+  const descriptors = Object.getOwnPropertyDescriptors(cls.prototype)
+  // console.log(`\x1b[35m${cls.name}\x1b[0m`)
+  for (const [name, descriptor] of Object.entries(descriptors)) {
+    if (typeof descriptor.value !== 'function') continue
+    if (name.startsWith('_') || name === 'constructor') continue
+    // console.log(`  ${name}:`, descriptor.value)
+    jest.spyOn(cls.prototype, name)
+    cls.prototype[name].mockImplementation(() => {})
+  }
 }
-const permissionOverwriteManager = {
-  set: jest.fn(),
-  create: jest.fn(),
-  edit: jest.fn(),
-  delete: jest.fn()
+mockClass(PermissionOverwriteManager)
+mockClass(PermissionOverwrites)
+mockClass(GuildChannel)
+mockClass(BaseGuildTextChannel)
+mockClass(BaseGuildVoiceChannel)
+
+const channelType = {
+  [ChannelType.GuildAnnouncement]: TextChannel,
+  [ChannelType.GuildCategory]: CategoryChannel,
+  [ChannelType.GuildDirectory]: DirectoryChannel,
+  [ChannelType.GuildForum]: ForumChannel,
+  [ChannelType.GuildStageVoice]: StageChannel,
+  [ChannelType.GuildText]: TextChannel,
+  [ChannelType.GuildVoice]: VoiceChannel
 }
-const permissionsBitField = {
-  any: jest.fn(),
-  has: jest.fn(),
-  missing: jest.fn(),
-  serialize: jest.fn(),
-  toArray: jest.fn()
-}
-const permissionOverwrites = {
-  edit: jest.fn(),
-  delete: jest.fn(),
-  toJSON: jest.fn(),
-  resolveOverwriteOptions: jest.fn(),
-  resolve: jest.fn(),
-  allow: { ...permissionsBitField },
-  deny: { ...permissionsBitField }
-}
+Object.values(channelType).forEach(v => mockClass(v))
 
 /**
  * Creates a mock channel
@@ -80,15 +45,16 @@ const permissionOverwrites = {
  */
 function createChannel (guild, options = {}, client) {
   const id = options.id || Date.now().toString()
-  const config = Object.assign({}, channel, options, { id })
-  const result = new GuildChannel(guild, config, client)
-  Object.assign(result.permissionOverwrites, permissionOverwriteManager)
+  const config = Object.assign({}, options, { id })
+  const Channel = channelType[options.type] || TextChannel
+  const result = new Channel(guild, config, client)
   Object.assign(result, config)
   return result
 }
 function createPermissionOverwrites(client, channel, options = {}) {
+  options.allow ??= 0
+  options.deny ??= 0
   const result = new PermissionOverwrites(client, options, channel)
-  Object.assign(result, permissionOverwrites)
   return result
 }
 
@@ -404,8 +370,8 @@ function createMember (client, options = {}, guild) {
 }
 
 module.exports = {
-  channel, createChannel,
-  permissionOverwrites, createPermissionOverwrites,
+  createChannel,
+  createPermissionOverwrites,
   client, createClient,
   guild, createGuild,
   interaction, createInteraction,

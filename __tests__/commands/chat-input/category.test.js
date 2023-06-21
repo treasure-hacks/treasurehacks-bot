@@ -15,13 +15,14 @@ const channels = [
   discordMock.createChannel(guild, { id: '6', parentId: 'g1', name: 'dont-delete' }, client),
   discordMock.createChannel(guild, { id: '7', parentId: 'g1', name: 'dont-delete' }, client)
 ]
+const deleteFn = channels[0].delete
 guild.channels.cache.set(category.id, category)
 channels.forEach(c => guild.channels.cache.set(c.id, c))
 discordMock.interaction.options.getChannel.mockReturnValue(category)
 
 describe('Category Clear Command', () => {
   beforeEach(() => {
-    discordMock.channel.delete.mockClear()
+    deleteFn.mockClear()
   })
 
   it('Replies with an embed of channel IDs that it will delete', () => {
@@ -40,20 +41,20 @@ describe('Category Clear Command', () => {
   it('Calls delete once for each channel it is deleting and no more', () => {
     const interaction = discordMock.createInteraction(client, { guild })
     clearCategory(interaction, client)
-    expect(discordMock.channel.delete).toBeCalledTimes(4) // 2, 3, 4, 5
+    expect(deleteFn).toBeCalledTimes(4) // 2, 3, 4, 5
   })
 
   it('Calls delete for every channel, plus one for category if specified', () => {
     const interaction = discordMock.createInteraction(client, { guild })
     discordMock.interaction.options.getBoolean.mockReturnValueOnce(true)
     clearCategory(interaction, client)
-    expect(discordMock.channel.delete).toBeCalledTimes(5) // 2, 3, 4, 5, 1
+    expect(deleteFn).toBeCalledTimes(5) // 2, 3, 4, 5, 1
   })
 })
 
 describe('Category Sync Command', () => {
   beforeEach(() => {
-    discordMock.channel.lockPermissions.mockClear()
+    channels[0].lockPermissions.mockClear()
   })
 
   it('Replies with an embed of channels that it will sync', () => {
@@ -74,7 +75,7 @@ describe('Category Sync Command', () => {
   it('Calls lockPermissions once for every channel in the category', () => {
     const interaction = discordMock.createInteraction(client, { guild })
     syncCategory(interaction, client)
-    expect(discordMock.channel.lockPermissions).toBeCalledTimes(4) // 2, 3, 4, 5
+    expect(channels[0].lockPermissions).toBeCalledTimes(4) // 2, 3, 4, 5
   })
 })
 
