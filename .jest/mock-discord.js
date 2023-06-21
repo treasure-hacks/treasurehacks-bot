@@ -298,74 +298,32 @@ function createInteraction (client, options = {}, userData = {}) {
   return result
 }
 
-const role = {
-  comparePositionTo: jest.fn(),
-  delete: jest.fn(),
-  edit: jest.fn(),
-  equals: jest.fn(),
-  iconURL: jest.fn(),
-  permissionsIn: jest.fn(),
-  setColor: jest.fn(),
-  setHoist: jest.fn(),
-  setMentionable: jest.fn(),
-  setName: jest.fn(),
-  setPermissions: jest.fn(),
-  setIcon: jest.fn(),
-  setPosition: jest.fn(),
-  setUnicodeEmoji: jest.fn(),
-  toJSON: jest.fn(),
-  toString: jest.fn().mockImplementation(function () { return `<@&${this.id}>` })
-}
+mockClass(Role)
+Role.prototype.toString.mockReset() // use original implementation
+
 function createRole (client, options = {}, guild) {
   const result = new Role(client, options, guild)
-  Object.assign(result, role)
+  // Object.assign(result, role)
   return result
 }
 
-const user = {
-  avatarURL: jest.fn(),
-  bannerURL: jest.fn(),
-  createDM: jest.fn(),
-  deleteDM: jest.fn(),
-  displayAvatarURL: jest.fn(),
-  equals: jest.fn(),
-  fetch: jest.fn(),
-  fetchFlags: jest.fn(),
-  toString: jest.fn().mockImplementation(function () { return `<@${this.id}>` })
-}
+mockClass(User)
+User.prototype.toString.mockReset()
+
 function createUser (client, options = {}) {
   const result = new User(client, options)
-  Object.assign(result, user)
+  // Object.assign(result, user)
   return result
 }
 
-const member = {
-  ...user,
-  // Guild Members
-  ban: jest.fn(),
-  disableCommunicationUntil: jest.fn(),
-  timeout: jest.fn(),
-  displayAvatarURL: jest.fn(),
-  edit: jest.fn(),
-  isCommunicationDisabled: jest.fn(),
-  kick: jest.fn(),
-  permissionsIn: jest.fn(),
-  setFlags: jest.fn(),
-  setNickname: jest.fn(),
-  toJSON: jest.fn(),
-  toString: jest.fn().mockImplementation(function () { return `<@${this.id}>` }),
-  valueOf: jest.fn()
-}
-const gmRoleManager = {
-  add: jest.fn(),
-  set: jest.fn(),
-  remove: jest.fn()
-}
+mockClass(GuildMember)
+mockClass(GuildMemberRoleManager)
+
+GuildMember.prototype.toString.mockReset()
+
 function createMember (client, options = {}, guild) {
   const result = new GuildMember(client, options, guild)
   result.roles = new GuildMemberRoleManager(result)
-  Object.assign(result.roles, gmRoleManager)
-  Object.assign(result, member)
   return result
 }
 
@@ -375,8 +333,8 @@ module.exports = {
   client, createClient,
   guild, createGuild,
   interaction, createInteraction,
-  role, createRole,
-  user, createUser,
-  member, createMember,
+  createRole,
+  createUser,
+  createMember,
   resolveTo
 }
