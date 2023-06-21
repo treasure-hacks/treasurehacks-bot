@@ -115,7 +115,10 @@ describe('Channel Archive Command', () => {
     guild.roles.fetch.mockImplementation(id => guild.roles.cache.find(r => r.id === id))
 
     await archiveChannel(interaction, client)
-    expect(interaction.reply).toBeCalledWith({ content: 'The following users and roles can no longer send messages in this channel: <@u1>, <@&g1>', ephemeral: true })
+    expect(interaction.reply).toBeCalledWith({
+      content: 'The following users and roles can no longer send messages in this channel: <@u1>, @everyone',
+      ephemeral: true
+    })
   })
 
   it('Sends a message indicating that the channel was archived', async () => {
