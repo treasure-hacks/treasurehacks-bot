@@ -1,21 +1,34 @@
----
-title: Discord bot
-description: A Discord bot written in JavaScript
-tags:
-  - discord.js
-  - javascript
----
-
 # Treasure Hacks Discord Bot
 
-This starts a Discord bot using [discord.js](https://discord.js.org/).
+A Discord bot created for Treasure Hacks using [discord.js](https://discord.js.org/).
 
 ## Running Locally
 - Install dependencies `npm install`
-- Add `DISCORD_TOKEN` and `DETA_PROJECT_KEY` to `.ENV` file
+- Add the following variables to a `.ENV` file:
+  - `BOT_API_KEY`: An API Key that will allow you to access the bot's API
+  - `BOT_CLIENT_ID`: The Discord Bot's Client ID
+  - `CORS_ORIGINS`: Which origins to allow CORS for
+  - `DISCORD_TOKEN`: The Discord Bot's API Token
+  - `DETA_PROJECT_KEY`: The Deta project or collection key
+  - `PORT`: The port to run the bot on locally
 - Run development bot `npm run dev`
+- Run jest unit tests with `npm test`
+  - Tests for `treasurehacks-bot` currently mock classes in `deta` and `discord.js`.
+  - These mocks are not fully comprehensive and may need to be updated depending on the tests being written.
 
-## 📝 Notes
+## Development
 
-- Upon the first run of the starter, it can take up to an hour for your slash commands to be visible in the Discord Client.
-- To create a new command, just create a file in the `commands` directory. You can take a look at the `template.js` file for an example of what commands should look like. For any additional help see the [discord.js guide](https://discordjs.guide).
+Upon the first run of the starter, it can take up to an hour for your slash commands to be visible in the Discord Client.
+
+Run `npm test` before pushing your changes
+
+### Creating Commands
+
+Command Type|Directory|Template File
+-:|:-|:-
+Slash (Chat Input) Command| `src/commands/chat-input/`|`templates/chat-command.js`
+Context Menu Command| `src/commands/context-menu/`|`templates/ctx-command.js`
+Button Action| `src/button-actions/`|`templates/button-action.js`
+Modal Submission| `src/modal-actions/`|`templates/button-action.js` (for now)
+
+For any additional help see the [discord.js guide](https://discordjs.guide).
