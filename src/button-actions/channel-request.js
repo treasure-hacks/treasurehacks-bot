@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { ButtonInteraction } = require('discord.js')
+const { ButtonInteraction, User, GuildMember, GuildChannel, PermissionOverwrites } = require('discord.js')
 const { PermissionsBitField, ChannelType } = require('discord.js')
 const { Deta } = require('deta')
 const { sendMessage } = require('../modules/message')

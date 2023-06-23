@@ -1,8 +1,8 @@
-const { ChannelType } = require('discord.js')
 // Mocks must come before command imports
 const discordMock = require('../../../.jest/mock-discord')
 const detaMock = require('../../../.jest/mock-deta')
 // Command Imports must come after mocks
+const { ChannelType } = require('discord.js')
 const {
   createLeaderboard, deleteLeaderboard, repostLeaderboard,
   updatePostsLeaderboard, /* updateUsersLeaderboard, listLeaderboards, */ resetLeaderboard
@@ -11,15 +11,14 @@ const { generateLeaderboardPost } = require('../../../src/scripts/leaderboard')
 
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: '0' })
+client.guilds.cache.set(guild.id, guild)
 const category = discordMock.createChannel(guild, { id: '1', type: ChannelType.GuildCategory, name: 'category' })
 const channel = discordMock.createChannel(guild, { id: '2', guild, name: 'main' }, client)
-guild.channels.cache.set(category.id, category)
-guild.channels.cache.set(channel.id, channel)
+client.channels.cache.set(category.id, category)
+client.channels.cache.set(channel.id, channel)
 
 const user = discordMock.createUser(client, { id: 'u1' })
 const member = discordMock.createMember(client, { user }, guild)
-
-discordMock.interaction.options.getChannel.mockReturnValue(channel)
 
 function testNonExistent (thisArg, fn) {
   return async () => {
@@ -50,15 +49,16 @@ describe('Leaderboard Create Command', () => {
       .mockReturnValueOnce('leaderboard') // Name
       .mockReturnValueOnce('Leaderboard') // Title
       .mockReturnValueOnce('post') // Type (post or user)
+    this.interaction.options.getChannel.mockReturnValue(channel)
   })
 
   afterAll(() => {
     detaMock.Base.get.mockReset()
-    this.interaction.options.getSubcommand.mockReset()
-    channel.send.mockReset()
+    this.interaction.options.getSubcommand.mockClear()
+    channel.send.mockClear()
   })
   afterEach(() => {
-    this.interaction.reply.mockReset()
+    this.interaction.reply.mockClear()
   })
 
   it('Replies with an error if a leaderboard with that name already exists', async () => {
@@ -148,11 +148,11 @@ describe('Leaderboard Delete Command', () => {
 
   afterAll(() => {
     detaMock.Base.get.mockReset()
-    this.interaction.options.getSubcommand.mockReset()
-    channel.send.mockReset()
+    this.interaction.options.getSubcommand.mockClear()
+    channel.send.mockClear()
   })
   afterEach(() => {
-    this.interaction.reply.mockReset()
+    this.interaction.reply.mockClear()
   })
 
   it('Replies with an error if that leaderboard does not exist', testNonExistent(this, deleteLeaderboard))
@@ -237,14 +237,14 @@ describe('Leaderboard Repost Command', () => {
 
   afterAll(() => {
     detaMock.Base.get.mockReset()
-    this.interaction.options.getSubcommand.mockReset()
-    channel.send.mockReset()
+    this.interaction.options.getSubcommand.mockClear()
+    channel.send.mockClear()
   })
   afterEach(() => {
-    this.interaction.reply.mockReset()
-    this.interaction.deferReply.mockReset()
-    this.interaction.deleteReply.mockReset()
-    this.interaction.deferReply.mockReset()
+    this.interaction.reply.mockClear()
+    this.interaction.deferReply.mockClear()
+    this.interaction.deleteReply.mockClear()
+    this.interaction.deferReply.mockClear()
   })
 
   it('Replies with an error if that leaderboard does not exist', testNonExistent(this, repostLeaderboard))
@@ -315,13 +315,13 @@ describe('Leaderboard Reset Command', () => {
   afterAll(() => {
     detaMock.Base.get.mockReset()
     this.interaction.options.getSubcommand.mockReset()
-    channel.send.mockReset()
+    channel.send.mockClear()
   })
   afterEach(() => {
-    this.interaction.reply.mockReset()
-    this.interaction.deferReply.mockReset()
-    this.interaction.deleteReply.mockReset()
-    this.interaction.deferReply.mockReset()
+    this.interaction.reply.mockClear()
+    this.interaction.deferReply.mockClear()
+    this.interaction.deleteReply.mockClear()
+    this.interaction.deferReply.mockClear()
   })
 
   it('Replies with an error if that leaderboard does not exist', testNonExistent(this, resetLeaderboard))
@@ -409,14 +409,14 @@ describe('Leaderboard Update Command (Post Leaderboards)', () => {
 
   afterAll(() => {
     detaMock.Base.get.mockReset()
-    this.interaction.options.getSubcommand.mockReset()
-    channel.send.mockReset()
+    this.interaction.options.getSubcommand.mockClear()
+    channel.send.mockClear()
   })
   afterEach(() => {
-    this.interaction.reply.mockReset()
-    this.interaction.deferReply.mockReset()
-    this.interaction.deleteReply.mockReset()
-    this.interaction.deferReply.mockReset()
+    this.interaction.reply.mockClear()
+    this.interaction.deferReply.mockClear()
+    this.interaction.deleteReply.mockClear()
+    this.interaction.deferReply.mockClear()
   })
 
   it('Replies with an error if that leaderboard does not exist', testNonExistent(this, updatePostsLeaderboard))

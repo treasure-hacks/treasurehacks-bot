@@ -15,6 +15,7 @@ function createVoiceState (channel, member) {
 
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: 'g1' })
+client.guilds.cache.set(guild.id, guild)
 
 const users = [
   discordMock.createUser(client, { id: 'u1' }),
@@ -38,17 +39,16 @@ client.channels.cache.set(stageC2.id, stageC2)
 guild.voiceStates.cache.set('u1', createVoiceState(voiceCh, members[0]))
 guild.voiceStates.cache.set('u2', createVoiceState(voiceCh, members[1]))
 
-discordMock.interaction.options.getString.mockReturnValue('name')
-
 describe('Voice Merge Command', () => {
   beforeAll(() => {
     this.interaction = discordMock.createInteraction(client, { guild, channel })
+    this.interaction.options.getString.mockReturnValue('name')
   })
   beforeEach(() => {
-    this.interaction.reply.mockReset()
-    channel.send.mockReset()
-    members[0].voice.setChannel.mockReset()
-    members[1].voice.setChannel.mockReset()
+    this.interaction.reply.mockClear()
+    channel.send.mockClear()
+    members[0].voice.setChannel.mockClear()
+    members[1].voice.setChannel.mockClear()
   })
 
   it('Replies with error if the current channel is not a voice channel', async () => {
@@ -58,13 +58,13 @@ describe('Voice Merge Command', () => {
   })
 
   it('Refreshes the guild', async () => {
-    this.interaction.channel = voiceCh
+    this.interaction.channelId = voiceCh.id
     await mergePeople(this.interaction, client, 0)
     expect(guild.fetch).toBeCalled()
   })
 
   it('Replies with message indicating the number of people being merged', async () => {
-    this.interaction.channel = stageCh
+    this.interaction.channelId = stageCh.id
     client.channels.cache.set(channel.id, channel)
     const expectedReply = { content: 'Merging 2 members into <#4>', ephemeral: true }
 

@@ -7,6 +7,7 @@ const { makeChannelRequest } = require('../../../src/commands/chat-input/request
 
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: '0' })
+client.guilds.cache.set(guild.id, guild)
 const category = discordMock.createChannel(guild, { id: '1', type: ChannelType.GuildCategory, name: 'category' })
 const channel = discordMock.createChannel(guild, { id: '2', guild, name: 'main' }, client)
 guild.channels.cache.set(category.id, category)
@@ -14,8 +15,6 @@ guild.channels.cache.set(channel.id, channel)
 
 const user = discordMock.createUser(client, { id: 'u1' })
 const member = discordMock.createMember(client, { user, roles: [] }, guild)
-
-discordMock.interaction.options.getChannel.mockReturnValue(channel)
 
 describe('Request Channel Command', () => {
   beforeAll(() => {
@@ -33,6 +32,7 @@ describe('Request Channel Command', () => {
       alertsChannel: channel.id,
       channelRequest: { enabled: true }
     })
+    this.interaction.options.getChannel.mockReturnValue(channel)
     this.interaction.options.getString
       .mockReturnValueOnce('test') // name
       .mockReturnValueOnce('<@2>') // members
@@ -41,7 +41,7 @@ describe('Request Channel Command', () => {
 
   afterEach(() => {
     detaMock.Base.get.mockReset()
-    this.interaction.reply.mockReset()
+    this.interaction.reply.mockClear()
   })
 
   it('Replies with an error if channel requests are disabled', async () => {

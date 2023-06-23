@@ -7,6 +7,7 @@ const { respondWithPoints } = require('../../../src/commands/chat-input/points')
 
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: '0', name: 'Some Guild' })
+client.guilds.cache.set(guild.id, guild)
 const category = discordMock.createChannel(guild, { id: '1', type: ChannelType.GuildCategory, name: 'category' })
 const channel = discordMock.createChannel(guild, { id: '2', guild, name: 'main' }, client)
 guild.channels.cache.set(category.id, category)
@@ -15,11 +16,10 @@ guild.channels.cache.set(channel.id, channel)
 const user = discordMock.createUser(client, { id: 'u1' })
 const member = discordMock.createMember(client, { user, roles: [] }, guild)
 
-discordMock.interaction.options.getChannel.mockReturnValue(channel)
-
 describe('Points Command', () => {
   beforeEach(() => {
     this.interaction = discordMock.createInteraction(client, { guild, member })
+    this.interaction.options.getChannel.mockReturnValue(channel)
   })
   beforeEach(() => {
     detaMock.Base.get.mockClear()
@@ -28,7 +28,7 @@ describe('Points Command', () => {
 
   afterEach(() => {
     detaMock.Base.get.mockReset()
-    this.interaction.reply.mockReset()
+    this.interaction.reply.mockClear()
   })
 
   it('Returns 0 of each type of point-earning task by default', async () => {
