@@ -88,6 +88,7 @@ describe('Request Channel Command', () => {
         type: 1,
         components: [
           { type: 2, label: 'Approve', style: 3, custom_id: 'btn_channel_request_approve' },
+          { type: 2, label: 'Rename', style: 3, custom_id: 'btn_channel_request_rename_approve' },
           { type: 2, label: 'Deny', style: 4, custom_id: 'btn_channel_request_deny' }
         ]
       }]

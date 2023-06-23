@@ -44,26 +44,13 @@ async function makeChannelRequest (interaction, client) {
   ]
 
   sendMessage(alertsChannel, {
-    embeds: [{
-      title: 'Incoming Channel Request',
-      color: 0x0088ff,
-      fields
-    }],
+    embeds: [{ title: 'Incoming Channel Request', color: 0x0088ff, fields }],
     components: [{
       type: 1,
       components: [
-        {
-          type: 2,
-          label: 'Approve',
-          style: 3,
-          custom_id: 'btn_channel_request_approve'
-        },
-        {
-          type: 2,
-          label: 'Deny',
-          style: 4,
-          custom_id: 'btn_channel_request_deny'
-        }
+        { type: 2, label: 'Approve', style: 3, custom_id: 'btn_channel_request_approve' },
+        { type: 2, label: 'Rename', style: 3, custom_id: 'btn_channel_request_rename_approve' },
+        { type: 2, label: 'Deny', style: 4, custom_id: 'btn_channel_request_deny' }
       ]
     }]
   })
