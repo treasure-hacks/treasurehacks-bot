@@ -26,11 +26,11 @@ const members = [
   discordMock.createMember(client, { user: users[1], roles: [] }, guild)
 ]
 
-const category = discordMock.createChannel(guild, { id: '1', name: 'CAT!', type: ChannelType.GuildCategory })
-const channel = discordMock.createChannel(guild, { id: '2', name: 'TEXT!', type: ChannelType.GuildText })
-const voiceCh = discordMock.createChannel(guild, { id: '3', name: 'VOICE', type: ChannelType.GuildVoice, parentId: '1' })
-const stageCh = discordMock.createChannel(guild, { id: '4', name: 'STAGE', type: ChannelType.GuildStageVoice })
-const stageC2 = discordMock.createChannel(guild, { id: '5', name: 'STAGE2', type: ChannelType.GuildStageVoice })
+const category = discordMock.createChannel(client, guild, { id: '1', name: 'CAT!', type: ChannelType.GuildCategory })
+const channel = discordMock.createChannel(client, guild, { id: '2', name: 'TEXT!', type: ChannelType.GuildText })
+const voiceCh = discordMock.createChannel(client, guild, { id: '3', name: 'VOICE', type: ChannelType.GuildVoice, parentId: '1' })
+const stageCh = discordMock.createChannel(client, guild, { id: '4', name: 'STAGE', type: ChannelType.GuildStageVoice })
+const stageC2 = discordMock.createChannel(client, guild, { id: '5', name: 'STAGE2', type: ChannelType.GuildStageVoice })
 client.channels.cache.set(category.id, category)
 client.channels.cache.set(channel.id, channel)
 client.channels.cache.set(voiceCh.id, voiceCh)

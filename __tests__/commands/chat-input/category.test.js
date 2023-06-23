@@ -7,14 +7,14 @@ const { clearCategory, syncCategory, teamCategory } = require('../../../src/comm
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: 'g1' })
 client.guilds.cache.set(guild.id, guild)
-const category = discordMock.createChannel(guild, { id: '1', type: ChannelType.GuildCategory, name: 'cat' })
+const category = discordMock.createChannel(client, guild, { id: '1', type: ChannelType.GuildCategory, name: 'cat' })
 const channels = [
-  discordMock.createChannel(guild, { id: '2', parentId: '1', name: 'test-channel' }, client),
-  discordMock.createChannel(guild, { id: '3', parentId: '1', name: 'test-channel' }, client),
-  discordMock.createChannel(guild, { id: '4', parentId: '1', name: 'test-channel' }, client),
-  discordMock.createChannel(guild, { id: '5', parentId: '1', name: 'test-channel' }, client),
-  discordMock.createChannel(guild, { id: '6', parentId: 'g1', name: 'dont-delete' }, client),
-  discordMock.createChannel(guild, { id: '7', parentId: 'g1', name: 'dont-delete' }, client)
+  discordMock.createChannel(client, guild, { id: '2', parentId: '1', name: 'test-channel' }),
+  discordMock.createChannel(client, guild, { id: '3', parentId: '1', name: 'test-channel' }),
+  discordMock.createChannel(client, guild, { id: '4', parentId: '1', name: 'test-channel' }),
+  discordMock.createChannel(client, guild, { id: '5', parentId: '1', name: 'test-channel' }),
+  discordMock.createChannel(client, guild, { id: '6', parentId: 'g1', name: 'dont-delete' }),
+  discordMock.createChannel(client, guild, { id: '7', parentId: 'g1', name: 'dont-delete' })
 ]
 const deleteFn = channels[0].delete
 guild.channels.cache.set(category.id, category)

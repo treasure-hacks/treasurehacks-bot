@@ -44,7 +44,7 @@ Object.values(channelType).forEach(v => mockClass(v))
  * @param {Guild} guild The guild the channel belongs to
  * @param {{id: string, name: string, type: number, [key: string]: any}} options The channel properties
  */
-function createChannel (guild, options = {}, client) {
+function createChannel (client, guild, options = {}) {
   const id = options.id || Date.now().toString()
   const config = Object.assign({}, options, { id })
   const Channel = channelType[options.type] || TextChannel

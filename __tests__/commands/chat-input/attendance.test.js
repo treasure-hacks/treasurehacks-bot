@@ -21,7 +21,7 @@ client.guilds.cache.set(guild.id, guild)
 describe('Attendance Record Command', () => {
   it('Replies with error if the current channel is not a voice channel', async () => {
     const expectedReply = { content: 'Error: Is not a voice channel', ephemeral: true }
-    const channel = discordMock.createChannel(guild, { type: ChannelType.GuildText })
+    const channel = discordMock.createChannel(client, guild, { type: ChannelType.GuildText })
     client.channels.cache.set(channel.id, channel)
     const interaction = discordMock.createInteraction(client, { guild, channel })
     await recordAttendance(interaction, client)
@@ -29,7 +29,7 @@ describe('Attendance Record Command', () => {
   })
 
   it('Refreshes the guild', async () => {
-    const channel = discordMock.createChannel(guild, { type: ChannelType.GuildVoice })
+    const channel = discordMock.createChannel(client, guild, { type: ChannelType.GuildVoice })
     client.channels.cache.set(channel.id, channel)
     const interaction = discordMock.createInteraction(client, { guild, channel })
     interaction.options.getString.mockReturnValue('name')
@@ -40,7 +40,7 @@ describe('Attendance Record Command', () => {
 
   it('Replies with error if voice channel is empty', async () => {
     const expectedReply = { content: 'Error: No members in voice channel', ephemeral: true }
-    const channel = discordMock.createChannel(guild, { type: ChannelType.GuildStageVoice })
+    const channel = discordMock.createChannel(client, guild, { type: ChannelType.GuildStageVoice })
     client.channels.cache.set(channel.id, channel)
     const interaction = discordMock.createInteraction(client, { guild, channel })
     interaction.options.getString.mockReturnValue('name')
@@ -56,7 +56,7 @@ describe('Attendance Record Command', () => {
       '\n\n`<@user-1>`',
       ephemeral: true
     }
-    const channel = discordMock.createChannel(guild, { type: ChannelType.GuildVoice })
+    const channel = discordMock.createChannel(client, guild, { type: ChannelType.GuildVoice })
     client.channels.cache.set(channel.id, channel)
     const interaction = discordMock.createInteraction(client, { guild, channel })
     interaction.options.getString.mockReturnValue('name')
@@ -69,7 +69,7 @@ describe('Attendance Record Command', () => {
 
   it('Replies with attendance recorded message', async () => {
     const expectedConfig = createDefaultSettings(guild)
-    const channel = discordMock.createChannel(guild, { type: ChannelType.GuildVoice })
+    const channel = discordMock.createChannel(client, guild, { type: ChannelType.GuildVoice })
     client.channels.cache.set(channel.id, channel)
     const interaction = discordMock.createInteraction(client, { guild, channel })
     interaction.options.getString.mockReturnValue('name')
@@ -84,7 +84,7 @@ describe('Attendance Record Command', () => {
 
 describe('Attendance List Command', () => {
   beforeEach(() => {
-    this.channel = discordMock.createChannel(guild, { type: ChannelType.GuildVoice })
+    this.channel = discordMock.createChannel(client, guild, { type: ChannelType.GuildVoice })
     this.interaction = discordMock.createInteraction(client, { guild, channel: this.channel })
   })
 
