@@ -8,8 +8,8 @@ const { setLog, setAlerts, getFeatureConfig, updateFeatureConfig } = require('..
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: 'g1' })
 client.guilds.cache.set(guild.id, guild)
-const category = discordMock.createChannel(guild, { id: '1', type: ChannelType.GuildCategory, name: 'category' })
-const channel = discordMock.createChannel(guild, { id: '2', guild, name: 'main' }, client)
+const category = discordMock.createChannel(client, guild, { id: '1', type: ChannelType.GuildCategory, name: 'category' })
+const channel = discordMock.createChannel(client, guild, { id: '2', guild, name: 'main' })
 guild.channels.cache.set(category.id, category)
 guild.channels.cache.set(channel.id, channel)
 detaMock.Base.get.mockReturnValue({}) // make it completely empty

@@ -7,12 +7,12 @@ const { archiveChannel, syncChannel } = require('../../../src/commands/chat-inpu
 const client = discordMock.createClient({}, [])
 const guild = discordMock.createGuild(client, { id: 'g1', everyoneRole: { permissions: PermissionFlagsBits.ViewChannel } })
 client.guilds.cache.set(guild.id, guild)
-const category = discordMock.createChannel(guild, { id: '1', type: ChannelType.GuildCategory, name: 'cat' })
+const category = discordMock.createChannel(client, guild, { id: '1', type: ChannelType.GuildCategory, name: 'cat' })
 const channels = [
-  discordMock.createChannel(guild, { id: '2', guild, parentId: '1', name: 'test-channel1' }, client),
-  discordMock.createChannel(guild, { id: '3', guild, parentId: '1', name: 'test-channel2' }, client),
-  discordMock.createChannel(guild, { id: '3a', guild, parentId: '3', name: 'thread', type: ChannelType.PublicThread }, client),
-  discordMock.createChannel(guild, { id: '4', guild, parentId: 'g1', name: 'some-channel' }, client)
+  discordMock.createChannel(client, guild, { id: '2', guild, parentId: '1', name: 'test-channel1' }),
+  discordMock.createChannel(client, guild, { id: '3', guild, parentId: '1', name: 'test-channel2' }),
+  discordMock.createChannel(client, guild, { id: '3a', guild, parentId: '3', name: 'thread', type: ChannelType.PublicThread }),
+  discordMock.createChannel(client, guild, { id: '4', guild, parentId: 'g1', name: 'some-channel' })
 ]
 client.channels.cache.set(category.id, category)
 channels.forEach(c => client.channels.cache.set(c.id, c))
