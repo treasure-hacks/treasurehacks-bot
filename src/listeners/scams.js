@@ -1,10 +1,8 @@
 // eslint-disable-next-line no-unused-vars
 const { Message, Events } = require('discord.js')
-// const axios = require('axios')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
-// const FormData = require('form-data')
 
 const { client } = require('../modules/bot-setup')
 
@@ -40,7 +38,7 @@ async function scanMessage (message) {
         'a market of some sort and second, asking the target user to reach out to them. Determine whether the ' +
         'following messages are crypto scams. Respond in 1 word only: "yes" or "no". If the user\'s message is ' +
         'definitely a crypto scam, respond "yes". In all other circumstances (including asking questions ' +
-        'about a crypto scam or having insufficient information) respond "no".\n\n'
+        'about a crypto scam or having insufficient information) respond "no".\n\n---\n\n'
     },
     { role: 'user', content: message.cleanContent }
   ]
@@ -56,7 +54,7 @@ async function scanMessage (message) {
     body: fd, // .getBuffer().toString(), // fetch does not convert to string automatically
     method: 'POST',
     referrerPolicy: 'same-origin'
-  }).then(x => console.log(x) || x.text()).catch((e) => { console.error(e) })
+  }).then(x => x.text()).catch((e) => { console.error(e) })
   console.log(response)
   if (!response || !/yes/i.test(response) || response.length > 20) return
   console.log('Scam Message Log:', { response: response, message: message.cleanContent, minLength })
