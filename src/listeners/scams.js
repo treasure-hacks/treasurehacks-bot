@@ -57,7 +57,7 @@ async function scanMessage (message) {
   }).then(x => x.text()).catch((e) => { console.error(e) })
   console.log(response)
   if (!response || !/yes/i.test(response) || response.length > 20) return
-  console.log('Scam Message Log:', { response: response, message: message.cleanContent, minLength })
+  console.log('Scam Message Log:', { response, message: message.cleanContent, minLength })
   alertsChannel.send({
     content: `[BETA] Message was marked as crypto scam.\n${message.url}`,
     embeds: [{
