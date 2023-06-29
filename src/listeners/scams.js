@@ -6,6 +6,21 @@ const serverSettingsDB = deta.Base('server-settings')
 
 const { client } = require('../modules/bot-setup')
 
+async function checkActionable (message, serverConfig, minLength) {
+  if (!serverConfig.cryptoScamScanner?.enabled) return false
+
+  const joinedDays = (new Date() - message.member.joinedAt) / 1000 / 3600 / 24
+  if (message.content != null && message.content.length < minLength) return false
+  if (joinedDays > serverConfig.cryptoScamScanner.maxDays) return false
+
+  const ignoredRoles = serverConfig.cryptoScamScanner?.ignoredRoles || []
+  const actionableUser = !ignoredRoles.some(id => {
+    return message.member.roles.cache.map(r => r.id).includes(id)
+  })
+
+  return actionableUser
+}
+
 /**
  * Scans the chat message for harmful or malicious links
  * @param {Message} message The chat message
@@ -14,19 +29,10 @@ async function scanMessage (message) {
   // Ignore messages sent by bots
   if (!message.member || message.member.user.bot) return
   const serverConfig = await serverSettingsDB.get(message.guild.id)
-  if (!serverConfig.cryptoScamScanner?.enabled) return
-
-  const joinedDays = (new Date() - message.member.joinedAt) / 1000 / 3600 / 24
   const minLength = serverConfig.cryptoScamScanner.minLength || 30
-  if (message.content != null && message.content.length < minLength) return
-  if (joinedDays > serverConfig.cryptoScamScanner.maxDays) return
+  if (!checkActionable(message, serverConfig, minLength)) return
 
-  const ignoredRoles = serverConfig.cryptoScamScanner?.ignoredRoles || []
-  const actionableUser = !ignoredRoles.some(id => {
-    return message.member.roles.cache.map(r => r.id).includes(id)
-  })
 
-  if (!actionableUser) return
   const channels = await message.guild.channels.fetch()
   const alertsChannel = channels.get(serverConfig.alertsChannel)
 
