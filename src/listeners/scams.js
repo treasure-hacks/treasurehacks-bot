@@ -6,6 +6,33 @@ const serverSettingsDB = deta.Base('server-settings')
 
 const { client } = require('../modules/bot-setup')
 
+const TIMEOUT_HOURS = 24
+const MEMORY_MESSAGE_TTL = 20
+/** @type {{ [key: string]: Message[] }} */
+const pendingScans = {}
+/** @type {{ [key: string]: { message: Message, alert: Message } }} */
+const recentScams = {} // so we can associate it with the first message
+
+/**
+ * Deletes the first message sent with the scam's content,
+ * and updates the alert to reflect that
+ * @param {string} key The content of the scam
+ * @param {Message[]} messages Repeated messages containing the same content
+ */
+async function deleteRepeatedScams (key, messages) {
+  if (!recentScams[key]) return
+  const { message, alert } = recentScams[key]
+  message.delete().catch(() => {})
+  const embeds = [{
+    author: { name: message.member.displayName, icon_url: message.member.displayAvatarURL() },
+    description: key
+  }]
+  messages.forEach(m => m.delete().catch(() => {}))
+  if (alert.editedAt) return // already took action
+  alert.edit({ embeds, content: '[BETA] Message was marked as crypto scam.\n*(deleted due to repeated messages)*' })
+  message.member.timeout(TIMEOUT_HOURS * 3600 * 1000, 'Repeated crypto scams').catch(() => {})
+}
+
 async function checkActionable (message, serverConfig, minLength) {
   if (!serverConfig.cryptoScamScanner?.enabled) return false
 
@@ -32,6 +59,11 @@ async function scanMessage (message) {
   const minLength = serverConfig.cryptoScamScanner.minLength || 30
   if (!checkActionable(message, serverConfig, minLength)) return
 
+  const content = message.cleanContent
+
+  if (recentScams[content]) return deleteRepeatedScams(content, [message]) // Repeated scam
+  if (pendingScans[content]?.push(message)) return // Message is pending, it will be handled later
+  pendingScans[content] = []
 
   const channels = await message.guild.channels.fetch()
   const alertsChannel = channels.get(serverConfig.alertsChannel)
@@ -39,17 +71,23 @@ async function scanMessage (message) {
   const { result } = await fetch('https://api.treasurehacks.org/ai/check-scam', {
     method: 'POST',
     headers: { 'x-api-key': process.env.API_ACCESS_TOKEN },
-    body: message.cleanContent
+    body: content
   }).then(x => x.json()).catch(() => ({}))
 
-  if (!result) return
-  console.log('Scam Message Log:', { message: message.cleanContent, minLength })
-  alertsChannel.send({
+  if (!result) return delete pendingScans[content]
+  console.log('Scam Message Log:', { message: content, minLength })
+  const alert = await alertsChannel.send({
+    author: { name: message.member.displayName, icon_url: message.member.displayAvatarURL() },
     content: `[BETA] Message was marked as crypto scam.\n${message.url}`,
-    embeds: [{
-      description: message.cleanContent
-    }]
+    embeds: [{ description: content }]
   })
+
+  // Mark it as a scam temporarily so we can catch repeated instances
+  // of the same message in a short amount of time
+  recentScams[content] = { message, alert }
+  setTimeout(() => { delete recentScams[content] }, MEMORY_MESSAGE_TTL * 1000)
+  if (pendingScans[content]?.length) deleteRepeatedScams(content, pendingScans[content])
+  delete pendingScans[content]
 }
 
 client.on(Events.MessageCreate, scanMessage)
