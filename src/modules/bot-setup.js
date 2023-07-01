@@ -1,7 +1,7 @@
 const fs = require('fs')
-const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js')
 // eslint-disable-next-line no-unused-vars
-const { CommandInteraction, ButtonInteraction, ModalSubmitInteraction } = require('discord.js')
+const { BaseInteraction, CommandInteraction, AutocompleteInteraction, ButtonInteraction, ModalSubmitInteraction } = require('discord.js')
+const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js')
 const path = require('path')
 const client = new Client({
   intents: [
@@ -103,6 +103,22 @@ async function respondToCommand (interaction) {
 }
 
 /**
+ * Responds to an interaction
+ * @param {AutocompleteInteraction} interaction The interaction
+ */
+async function respondToAutocomplete (interaction) {
+  const command = commands.get(interaction.commandType + '_' + interaction.commandName)
+  if (!command) return
+
+  try {
+    await command.autocomplete(interaction, client)
+  } catch (error) {
+    console.error(error)
+    return interaction.respond([])
+  }
+}
+
+/**
  * Responds to the button interaction
  * @param {ButtonInteraction} interaction The button interaction
  * @param {Client} client The Discord bot client
@@ -163,6 +179,7 @@ async function respondToModalSubmit (interaction, client) {
 async function respondToInteraction (interaction) {
   if (interaction.isButton()) return respondToButton(interaction)
   if (interaction.isCommand()) return respondToCommand(interaction)
+  if (interaction.isAutocomplete()) return respondToAutocomplete(interaction)
   if (interaction.isModalSubmit()) return respondToModalSubmit(interaction)
 }
 
