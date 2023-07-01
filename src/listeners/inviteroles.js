@@ -17,15 +17,13 @@ async function loadInvites () {
   client.guilds.cache.forEach(async guild => {
     // Fetch all Guild Invites
     const firstInvites = await guild.invites.fetch()
-    const inviteArray = firstInvites.map((invite) => [invite.code, invite.uses])
-    invites.set(guild.id, new Collection(inviteArray))
+    const inviteArray = firstInvites.map(invite => [invite.code, invite.uses])
+    invites.set(guild.id, new Map(inviteArray))
   })
 }
-function updateGuildInvites (guild) {
-  guild.invites.fetch().then(guildInvites => {
-    // This is the same as the ready event
-    invites.set(guild.id, new Map(guildInvites.map((invite) => [invite.code, invite.uses])))
-  })
+async function updateGuildInvites (guild) {
+  const guildInvites = await guild.invites.fetch()
+  invites.set(guild.id, new Map(guildInvites.map(invite => [invite.code, invite.uses])))
 }
 
 client.on(Events.InviteDelete, (invite) => {
@@ -53,8 +51,6 @@ client.on(Events.GuildDelete, (guild) => {
  * @param {GuildMember} member The member to add invite roles to
  */
 async function addInviteRolesToNewMember (member) {
-  const serverConfig = await serverSettingsDB.get(member.guild.id)
-
   const newInvites = await member.guild.invites.fetch()
   // This is the *existing* invites for the guild.
   const oldInvites = invites.get(member.guild.id)
@@ -67,8 +63,8 @@ async function addInviteRolesToNewMember (member) {
     return console.warn('Unknown invite for user: ' + member.user?.tag)
   }
 
-  const channels = await member.guild.channels.fetch()
-  const logChannel = channels.get(serverConfig.logChannel)
+  const serverConfig = await serverSettingsDB.get(member.guild.id)
+  const logChannel = await member.guild.channels.fetch(serverConfig.logChannel)
 
   const embeds = [{
     color: parseInt('5a686c', 16),
@@ -83,20 +79,19 @@ async function addInviteRolesToNewMember (member) {
     timestamp: new Date().toISOString()
   }]
 
-  const actions = serverConfig.inviteRoles.filter(action => action.inviteChannelIds?.includes(invite.channel.id))
-  serverConfig.inviteRoles = serverConfig.inviteRoles.map(action => {
-    if (!action.inviteChannelIds?.includes(invite.channel.id)) return action
-    action.occurrences += 1
+  const actions = serverConfig.inviteRoles.filter(action => {
+    return action.enabled && action.invites?.includes(invite.code)
+  })
+  for (const action of actions) {
+    action.occurrences++
     action.rolesToAdd.forEach(roleId => {
       const role = member.guild.roles.cache.get(roleId)
-      member.roles.add(role)
-        .catch(() => { sendMessage(logChannel, `Failed to add role ${role.name} to ${member.displayName}`) })
+      member.roles.add(role).catch(() => logChannel?.send(`Failed to add role ${role.name} to ${member.displayName}`))
     })
     setTimeout(() => {
       action.rolesToRemove.forEach(roleId => {
         const role = member.guild.roles.cache.get(roleId)
-        member.roles.remove(role)
-          .catch(() => { sendMessage(logChannel, `Failed to remove role ${role.name} from ${member.displayName}`) })
+        member.roles.remove(role).catch(() => logChannel?.send(`Failed to remove role ${role.name} from ${member.displayName}`))
       })
     }, 2000)
     const stats = getStats(action)
@@ -112,8 +107,7 @@ async function addInviteRolesToNewMember (member) {
           `${stats.occurrences} use${stats.occurrences === 1 ? '' : 's'}`
       }
     })
-    return action
-  })
+  }
   await serverSettingsDB.put(serverConfig)
   if (actions.length > 0) sendMessage(logChannel, { embeds })
 }
