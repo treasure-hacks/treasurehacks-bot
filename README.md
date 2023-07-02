@@ -5,6 +5,7 @@ A Discord bot created for Treasure Hacks using [discord.js](https://discord.js.o
 ## Running Locally
 - Install dependencies `npm install`
 - Add the following variables to a `.ENV` file:
+  - `API_ACCESS_TOKEN`: Access token used in calls to restricted Treasure Hacks API endpoints
   - `BOT_API_KEY`: An API Key that will allow you to access the bot's API
   - `BOT_CLIENT_ID`: The Discord Bot's Client ID
   - `CORS_ORIGINS`: Which origins to allow CORS for
