@@ -135,7 +135,7 @@ async function addInviteRule (interaction, client, isUpdate) {
       ephemeral: true
     })
   }
-  const replyContent = { embeds: [] }
+  const replyContent = { embeds: [], ephemeral: true }
   if (warnings.length) {
     replyContent.embeds.push({
       color: 0xf0b800,
@@ -274,7 +274,7 @@ async function removeInviteRule (interaction, client) {
   serverConfig.inviteRoles = serverConfig.inviteRoles.filter(r => r !== rule)
   await serverSettingsDB.put(serverConfig)
   autocompleteCache.delete(interaction.guild.id)
-  interaction.reply({ embeds })
+  interaction.reply({ embeds, ephemeral: true })
 }
 
 const autocompleteCache = new Collection()
