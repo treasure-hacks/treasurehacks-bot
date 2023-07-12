@@ -379,5 +379,9 @@ module.exports = {
       case 'delete': return removeInviteRule(interaction, client)
       case 'update': return addInviteRule(interaction, client, true, false)
     }
-  }
+  },
+  // Expose for tests
+  addInviteRule,
+  listInviteRoles,
+  removeInviteRule
 }
