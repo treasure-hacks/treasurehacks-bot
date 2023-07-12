@@ -154,7 +154,7 @@ async function addInviteRule (interaction, client, isUpdate) {
     existingRule.updated_at = Date.now()
     const { created_at: createdAt, occurrences } = getStats(existingRule)
     replyContent.embeds.push({
-      title: `Updated \`${name}\`` + (renameTo ? ` (renamed from ${name})` : ''),
+      title: `Updated \`${renameTo || name}\`` + (renameTo ? ` (renamed from ${name})` : ''),
       color: existingRule.color,
       description: (existingRule.description ? existingRule.description + '\n\n' : '') +
         `Applies to invites: ${existingRule.invites.join(', ')}` +

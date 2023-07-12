@@ -107,20 +107,6 @@ describe('Inviteroles add command', () => {
     expect(this.interaction.reply).toBeCalledWith(expectedReply)
   })
 
-  it('Replies with an error if you try to assign managed roles', async () => {
-    this.options['add-roles'] = '<@&12>'
-    const expectedReply = {
-      embeds: [{
-        color: 0xff0000,
-        title: 'Invalid Arguments',
-        description: 'Invalid roles: you cannot assign @everyone or managed roles.'
-      }],
-      ephemeral: true
-    }
-    await addInviteRule(this.interaction, client, false)
-    expect(this.interaction.reply).toBeCalledWith(expectedReply)
-  })
-
   it('Replies with an error if the rule already exists', async () => {
     detaMock.Base.get.mockReturnValueOnce({ inviteRoles: [{ name: 'tens' }] })
     const expectedReply = {
@@ -161,7 +147,6 @@ describe('Inviteroles add command', () => {
   })
 
   it('Adds the new invite role assignment rule to the database', async () => {
-    this.options['add-roles'] = '<@&111>'
     const expectedConfig = {
       name: 'tens',
       description: 'Gives someone the role with ID 10',
@@ -303,5 +288,151 @@ describe('Inviteroles delete command', () => {
     detaMock.Base.get.mockReturnValueOnce({ inviteRoles: [this.rule] })
     await removeInviteRule(this.interaction, client)
     expect(detaMock.Base.put).toBeCalledWith({ inviteRoles: [] })
+  })
+})
+
+describe('Inviteroles update command', () => {
+  beforeAll(() => {
+    this.interaction = discordMock.createInteraction(client, { guild, channel })
+    this.interaction.options.getString.mockImplementation(opt => this.options[opt])
+    this.interaction.options.getBoolean.mockReturnValue(true) // enabled
+    guild.invites.create.mockImplementation(async (channel, opts) => {
+      const invite = discordMock.createInvite(client, { ...opts, channel, code: 'newInv', id: '12' }, guild)
+      guild.invites.cache.set(invite.id, invite)
+      return invite
+    })
+    this.rule = {
+      name: 'tens',
+      occurrences: 0,
+      invites: ['INV'],
+      rolesToAdd: [],
+      rolesToRemove: ['99'],
+      created_at: 1234
+    }
+  })
+
+  beforeEach(() => {
+    this.options = {
+      name: 'tens',
+      rename: 'ten-people',
+      description: 'Gives someone the role with ID 10',
+      invites: invite.code
+    }
+    this.interaction.reply.mockClear()
+    detaMock.Base.put.mockClear()
+  })
+
+  it('Replies with an error if the rule name is invalid', async () => {
+    this.options.name = 'invalid name because there are spaces'
+
+    const expectedReply = {
+      embeds: [{
+        color: 0xff0000,
+        title: 'Invalid Arguments',
+        description: 'Name must only be alphanumeric characters, dashes, and underscores'
+      }],
+      ephemeral: true
+    }
+    await addInviteRule(this.interaction, client, true)
+    expect(this.interaction.reply).toBeCalledWith(expectedReply)
+  })
+
+  it('Replies with an error if roles are not formatted correctly', async () => {
+    // this is different from the role not existing
+    this.options['add-roles'] = '<BAD_FORMAT>'
+    const expectedAddReply = {
+      embeds: [{
+        color: 0xff0000,
+        title: 'Invalid Arguments',
+        description: 'Roles are not formatted properly. Please enter role names, separated by spaces. ie `@Group @Lobby`'
+      }],
+      ephemeral: true
+    }
+    await addInviteRule(this.interaction, client, true)
+    expect(this.interaction.reply).toBeCalledWith(expectedAddReply)
+
+    delete this.options['add-roles']
+    this.options['remove-roles'] = '<BAD_FORMAT>'
+    const expectedRemoveReply = {
+      embeds: [{
+        color: 0xff0000,
+        title: 'Invalid Arguments',
+        description: 'Roles are not formatted properly. Please enter role names, separated by spaces. ie `@Group @Lobby`'
+      }],
+      ephemeral: true
+    }
+    await addInviteRule(this.interaction, client, true)
+    expect(this.interaction.reply).toBeCalledWith(expectedRemoveReply)
+  })
+
+  it('Replies with an error if you try to assign managed roles', async () => {
+    this.options['add-roles'] = '<@&12>'
+    const expectedReply = {
+      embeds: [{
+        color: 0xff0000,
+        title: 'Invalid Arguments',
+        description: 'Invalid roles: you cannot assign @everyone or managed roles.'
+      }],
+      ephemeral: true
+    }
+    await addInviteRule(this.interaction, client, true)
+    expect(this.interaction.reply).toBeCalledWith(expectedReply)
+  })
+
+  it('Replies with an error if the rule does not exist', async () => {
+    this.options.name = 'nonexistent'
+    const expectedReply = {
+      embeds: [{
+        color: 0xff0000,
+        title: 'Error while updating rule `nonexistent`',
+        description: 'Rule does not exist'
+      }],
+      ephemeral: true
+    }
+    await addInviteRule(this.interaction, client, true)
+    expect(this.interaction.reply).toBeCalledWith(expectedReply)
+  })
+
+  it('Replies with a message that the rule was updated (and appropriate warnings)', async () => {
+    this.options['add-roles'] = '<@&111>'
+    const expectedReply = {
+      embeds: [
+        {
+          color: 15775744,
+          description: 'Could not find the following channels or roles: <@&111>',
+          title: 'Warnings'
+        },
+        {
+          title: 'Updated `ten-people` (renamed from tens)',
+          color: undefined,
+          description: 'Gives someone the role with ID 10\n\n' +
+            'Applies to invites: INV' +
+            '\nPeople invited will have these roles: ' +
+            '\nPeople invited will lose these roles: ',
+          footer: { text: 'Created just now • Updated just now • 0 uses' }
+        }
+      ],
+      ephemeral: true
+    }
+    await addInviteRule(this.interaction, client, true)
+    expect(this.interaction.reply).toBeCalledWith(expectedReply)
+  })
+
+  it('Updates the invite role assignment rule in the database', async () => {
+    this.options['remove-roles'] = 'None'
+    detaMock.Base.get.mockReturnValueOnce({ inviteRoles: [this.rule] })
+    const expectedConfig = {
+      name: 'ten-people',
+      invites: ['INV'],
+      rolesToAdd: [],
+      rolesToRemove: [],
+      occurrences: 0,
+      enabled: true,
+      created_at: 1234,
+      updated_at: 1234
+    }
+    this.interaction.reply.mockImplementation(x => console.log(x))
+    await addInviteRule(this.interaction, client, true)
+    expect(detaMock.Base.put).toBeCalledWith({ inviteRoles: [expectedConfig] })
   })
 })
