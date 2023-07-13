@@ -1,4 +1,4 @@
-const { ChannelType, ApplicationCommandOptionType, PermissionFlagsBits } = require('discord.js')
+const { PermissionFlagsBits } = require('discord.js')
 // Mocks must come before command imports
 const discordMock = require('../../../.jest/mock-discord')
 const detaMock = require('../../../.jest/mock-deta')
