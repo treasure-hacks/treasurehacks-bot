@@ -1,4 +1,4 @@
-const { PermissionOverwrites, PermissionsBitField, RoleManager, PermissionFlagsBits, BaseGuildTextChannel, TextChannel, VoiceChannel, StageChannel, ForumChannel, DirectoryChannel, CategoryChannel, PartialTextBasedChannel, BaseGuildVoiceChannel, GuildMemberManager, GuildChannelManager, BaseGuild, InteractionType, CommandInteraction, ModalSubmitInteraction, MessageComponentInteraction, ChatInputCommandInteraction, ApplicationCommandType, UserContextMenuCommandInteraction, MessageContextMenuCommandInteraction, Message, CommandInteractionOptionResolver } = require("discord.js")
+const { PermissionOverwrites, PermissionsBitField, RoleManager, PermissionFlagsBits, BaseGuildTextChannel, TextChannel, VoiceChannel, StageChannel, ForumChannel, DirectoryChannel, CategoryChannel, PartialTextBasedChannel, BaseGuildVoiceChannel, GuildMemberManager, GuildChannelManager, BaseGuild, InteractionType, CommandInteraction, ModalSubmitInteraction, MessageComponentInteraction, ChatInputCommandInteraction, ApplicationCommandType, UserContextMenuCommandInteraction, MessageContextMenuCommandInteraction, Message, CommandInteractionOptionResolver, Invite, GuildInviteManager } = require("discord.js")
 const { ChannelType, Client, Guild, BaseInteraction, User,
   GuildChannel, ClientUser, Role, GuildMember, GuildMemberRoleManager, PermissionOverwriteManager
 } = require("discord.js")
@@ -61,6 +61,13 @@ function createPermissionOverwrites(client, channel, options = {}) {
 
 mockClass(Client)
 mockClass(ClientUser)
+
+/**
+ * Creates a Discord bot client
+ * @param {Object} options Options for the client
+ * @param {Object[]} intents The required intents for the bot client
+ * @returns {Client}
+ */
 function createClient (options = {}, intents = []) {
   const result = new Client({ ...options, intents })
   result.user = new ClientUser(result, {})
@@ -72,7 +79,14 @@ mockClass(Guild)
 mockClass(GuildMemberManager)
 mockClass(GuildChannelManager)
 mockClass(RoleManager)
+mockClass(GuildInviteManager)
 
+/**
+ * Creates a guild
+ * @param {Client} client A mocked Discord bot user client
+ * @param {Object} options Options for the role
+ * @returns {Guild}
+ */
 function createGuild(client, options = {}) {
   const result = new Guild(client, { makeCache: jest.fn(), ...options })
   const ev = options.everyoneRole || {}
@@ -97,6 +111,15 @@ mockClass(MessageComponentInteraction)
 mockClass(ModalSubmitInteraction)
 mockClass(CommandInteractionOptionResolver)
 
+/**
+ * Creates a bot interaction
+ * @param {Client} client The Discord bot client
+ * @param {Object} options The options for the interaction
+ * @param {User} userData The bot user
+ * @returns {BaseInteraction|CommandInteraction|InteractionResponses|ChatInputCommandInteraction|
+ * UserContextMenuCommandInteraction|MessageContextMenuCommandInteraction|MessageComponentInteraction|
+ * ModalSubmitInteraction}
+ */
 function createInteraction (client, options = {}, userData = {}) {
   const type = options.type || InteractionType.ApplicationCommand
   const cmdType = options.commandType || ApplicationCommandType.ChatInput
@@ -123,6 +146,13 @@ function createInteraction (client, options = {}, userData = {}) {
 mockClass(Role)
 Role.prototype.toString.mockReset() // use original implementation
 
+/**
+ * Creates a role
+ * @param {Client} client The bot client
+ * @param {Object} options The options for the role
+ * @param {Guild} guild The guild to put the role in
+ * @returns {Role}
+ */
 function createRole (client, options = {}, guild) {
   const result = new Role(client, options, guild)
   return result
@@ -131,6 +161,12 @@ function createRole (client, options = {}, guild) {
 mockClass(User)
 User.prototype.toString.mockReset()
 
+/**
+ * Creates a mock user
+ * @param {Client} client The bot client
+ * @param {Object} options The options for the bot
+ * @returns {User}
+ */
 function createUser (client, options = {}) {
   const result = new User(client, options)
   return result
@@ -141,9 +177,21 @@ mockClass(GuildMemberRoleManager)
 
 GuildMember.prototype.toString.mockReset()
 
+/**
+ * Creates a mock guild member
+ * @param {Client} client The bot client
+ * @param {Object} options The options for the member
+ * @param {Guild} guild The guild the user is a member of
+ * @returns {GuildMember}
+ */
 function createMember (client, options = {}, guild) {
   const result = new GuildMember(client, options, guild)
   result.roles = new GuildMemberRoleManager(result)
+  return result
+}
+
+function createInvite (client, options = {}, guild) {
+  const result = new Invite(client, options, guild)
   return result
 }
 
@@ -156,5 +204,6 @@ module.exports = {
   createRole,
   createUser,
   createMember,
+  createInvite,
   resolveTo
 }
