@@ -33,7 +33,7 @@ async function deleteRepeatedScams (key, messages) {
   message.member.timeout(TIMEOUT_HOURS * 3600 * 1000, 'Repeated crypto scams').catch(() => {})
 }
 
-async function checkActionable (message, serverConfig, minLength) {
+function checkActionable (message, serverConfig, minLength) {
   if (!serverConfig.cryptoScamScanner?.enabled) return false
 
   const joinedDays = (new Date() - message.member.joinedAt) / 1000 / 3600 / 24
