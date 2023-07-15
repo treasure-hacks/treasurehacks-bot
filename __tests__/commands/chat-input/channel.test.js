@@ -133,6 +133,17 @@ describe('Channel Archive Command', () => {
     expect(this.channel.send).toBeCalledWith({
       embeds: [{ title: '', description: '📁 Channel archived by <@actor>' }]
     })
+
+    this.channel.send.mockClear()
+    interaction.options.getString.mockReturnValueOnce('No reason at all')
+    await archiveChannel(interaction, client)
+    expect(this.channel.send).toBeCalledWith({
+      embeds: [{
+        title: '',
+        description: '📁 Channel archived by <@actor>',
+        footer: { text: 'Reason: No reason at all' }
+      }]
+    })
   })
 })
 
