@@ -47,12 +47,14 @@ async function archiveChannel (interaction, client) {
     content: `The following users and roles can no longer send messages in this channel: ${changes.join(', ')}`,
     ephemeral: true
   })
-  interaction.channel.send({
-    embeds: [{
-      title: '',
-      description: `📁 Channel archived by ${interaction.user}`
-    }]
-  })
+
+  const embed = {
+    title: '',
+    description: `📁 Channel archived by ${interaction.user}`
+  }
+  const reason = interaction.options.getString('reason')
+  if (reason) embed.footer = { text: 'Reason: ' + reason }
+  interaction.channel.send({ embeds: [embed] })
 }
 
 /**
@@ -81,6 +83,10 @@ module.exports = {
       .addBooleanOption(option => option
         .setName('sync')
         .setDescription('Whether to sync permissions first')
+      )
+      .addStringOption(option => option
+        .setName('reason')
+        .setDescription('Optional reason to provide when archiving the channel')
       )
     )
     .addSubcommand(command => command
