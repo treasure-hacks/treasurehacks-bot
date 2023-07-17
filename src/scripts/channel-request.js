@@ -48,11 +48,11 @@ async function approveChannelRequest (interaction) {
   await interaction.guild.members.fetch()
 
   const membersField = fields.find(f => f.name === 'Members')
-  const team = membersField.value.split(', ').map(mention => {
+  const team = await Promise.all(membersField.value.split(', ').map(async mention => {
     const userId = mention.match(/<@!?(\d+)>/)[1]
-    const user = interaction.guild.members.cache.get(userId)
+    const user = await interaction.guild.members.fetch(userId)
     return user
-  })
+  }))
 
   const nameField = fields.find(f => f.name === 'Team Name')
   const category = serverConfig.channelRequest?.category
