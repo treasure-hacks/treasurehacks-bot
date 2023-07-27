@@ -1,6 +1,8 @@
+const { ChannelType } = require('discord.js')
 const { client } = require('../../../modules/bot-setup')
 const express = require('express')
 const router = express.Router()
+const Joi = require('joi')
 
 const { validateAPIKey } = require('../../../modules/api-key-validation')
 
@@ -44,6 +46,48 @@ router.get('/:guild/users', validateAPIKey, async (req, res) => {
   }).filter(u => userIDs.includes(u.id))
 
   res.send(users)
+})
+
+router.get('/:guild/announcements-for', validateAPIKey, async (req, res) => {
+  const schema = Joi.object({
+    channel: Joi.string().required(),
+    before: Joi.string().isoDate().required(),
+    after: Joi.string().isoDate().required(),
+    suffix: Joi.string().required()
+  })
+  const { error } = schema.validate(req.query)
+  if (error) return res.status(400).send({ error: error.details[0].message })
+
+  const channel = await client.guilds.fetch(req.params.guild)
+    .then(async g => await g.channels.fetch(req.query.channel))
+    .catch(() => {})
+  if (!channel) return res.status(404).send({ error: 'Could not find that announcements channel' })
+  if (channel.type !== ChannelType.GuildAnnouncement) {
+    return res.status(400).send({ error: 'Channel is not an annnouncements channel' })
+  }
+
+  const beforeDate = new Date(req.query.before)
+  const afterDate = new Date(req.query.after)
+  const limit = 20 // Don't get too many messages at a time
+  const messages = await channel.messages.fetch({ limit }).then(c => c.map(m => m))
+  let oldest = messages.at(-1)
+  while (oldest && oldest.createdTimestamp > afterDate) {
+    const olderMessages = await channel.messages.fetch({ before: oldest.id, limit }).then(c => c.map(m => m))
+    oldest = olderMessages.at(-1)
+    messages.push(...olderMessages)
+  }
+
+  const result = messages
+    .filter(m => m.createdAt > afterDate && m.createdAt < beforeDate)
+    .filter(m => m.cleanContent.endsWith(req.query.suffix))
+    .map(m => ({
+      timestamp: m.createdAt.toISOString(),
+      text: m.cleanContent
+        .substring(0, m.cleanContent.length - req.query.suffix.length)
+        .trim() // Strip whitespace, which will commonly be before the suffix
+    }))
+
+  res.send(result)
 })
 
 module.exports = router
