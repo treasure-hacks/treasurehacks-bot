@@ -56,13 +56,12 @@ async function putMessage (req, res, guildId, channelId, message, messageId = un
     if (['false', '0'].includes(req.query.downloadImages)) return
 
     const images = [
-      embed.thumbnail,
-      embed.image,
-      embed.author,
-      embed.footer
+      [embed.thumbnail, 'url'],
+      [embed.image, 'url'],
+      [embed.author, 'iconURL'],
+      [embed.footer, 'iconURL']
     ]
-    images.forEach(obj => {
-      const prop = obj?.url ? 'url' : 'iconURL'
+    images.forEach(([obj, prop]) => {
       const imgURL = obj && obj[prop]
       if (!imgURL?.startsWith('https://')) return
       const name = `image${filePromises.length + 1}.png`
