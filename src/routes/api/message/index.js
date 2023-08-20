@@ -6,6 +6,7 @@ const Joi = require('joi')
 
 const { validateBody } = require('../../../modules/api-body-validation')
 const { validateAPIKey } = require('../../../modules/api-key-validation')
+const { AttachmentBuilder } = require('discord.js')
 
 /**
  * Creates or edits a bot message
@@ -38,7 +39,7 @@ async function getMessage (req, res, guildId, channelId, messageId) {
  * @param {express.Response} res The response
  * @param {String} guildId The Guild ID
  * @param {String} channelId The channel ID
- * @param {Object} message The message content
+ * @param {Message} message The message content
  * @param {String} messageId The message ID
  */
 async function putMessage (req, res, guildId, channelId, message, messageId = undefined) {
@@ -47,6 +48,31 @@ async function putMessage (req, res, guildId, channelId, message, messageId = un
   if (!guild) return res.status(404).send({ error: 'Bot is not in this guild' })
   const channel = await guild.channels.fetch(channelId)
   if (!channel) return res.status(404).send({ error: 'This channel does not exist or the bot cannot access it' })
+
+  const filePromises = []
+  if (message.embeds?.length > 10) message.embeds.splice(10)
+  message.embeds?.forEach(embed => {
+    // Allow a query param to not download the images
+    if (['false', '0'].includes(req.query.downloadImages)) return
+
+    const images = [
+      embed.thumbnail,
+      embed.image,
+      embed.author,
+      embed.footer
+    ]
+    images.forEach(obj => {
+      const prop = obj?.url ? 'url' : 'iconURL'
+      const imgURL = obj && obj[prop]
+      if (!imgURL?.startsWith('https://')) return
+      const name = `image${filePromises.length + 1}.png`
+      obj[prop] = 'attachment://' + name
+      const promise = fetch(imgURL).then(x => x.arrayBuffer())
+        .then(buffer => new AttachmentBuilder(Buffer.from(buffer), { name }))
+      filePromises.push(promise)
+    })
+  })
+  message.files = await Promise.all(filePromises)
 
   if (messageId) {
     // Edit an existing message
