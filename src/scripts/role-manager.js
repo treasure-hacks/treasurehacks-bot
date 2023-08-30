@@ -30,7 +30,7 @@ async function addToRole (guildID, tag, roleName, reason) {
   if (!guild) return { error: 'Bot is not in this guild' }
 
   const users = (await guild.members.fetch()).filter(u => !u.user.bot)
-  const userMatch = users.find(u => `${u.user.username}#${u.user.discriminator}` === tag)
+  const userMatch = users.find(u => `${u.user.username}#${u.user.discriminator}`.replace(/#0$/, '') === tag)
   const targetRole = (await guild.roles.fetch()).find(r => r.name === roleName)
   if (!userMatch || !targetRole) return { error: 'User or role does not exist in this guild' }
 
@@ -48,7 +48,7 @@ async function addMultipleRoles (guildID, tag, roleIDs, reason) {
   if (!guild) return { error: 'Bot is not in this guild' }
 
   const users = (await guild.members.fetch()).filter(u => !u.user.bot)
-  const userMatch = users.find(u => `${u.user.username}#${u.user.discriminator}` === tag)
+  const userMatch = users.find(u => `${u.user.username}#${u.user.discriminator}`.replace(/#0$/, '') === tag)
   if (!userMatch) return { error: 'User does not exist in this guild' }
 
   const targetRoles = (await guild.roles.fetch()).map(r => r) // Maps to their actual values

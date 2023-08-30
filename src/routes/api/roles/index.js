@@ -9,7 +9,7 @@ const { validateAPIKey } = require('../../../modules/api-key-validation')
 router.post('/add', validateAPIKey, async (req, res) => {
   const isValid = validateBody(req, res, {
     guild: Joi.string().required(),
-    discord_tag: Joi.string().regex(/^.*#\d{4}$/).required(),
+    discord_tag: Joi.string().regex(/^(.*#\d{4}|[a-z0-9._]{2,})$/).required(),
     roles: Joi.array().items(Joi.string()).required().min(1),
     reason: Joi.string().required()
   }, { allowUnknown: true })
