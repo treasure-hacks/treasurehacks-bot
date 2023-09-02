@@ -144,7 +144,7 @@ function createInteraction (client, options = {}, userData = {}) {
 }
 
 mockClass(Role)
-Role.prototype.toString.mockReset() // use original implementation
+Role.prototype.toString.mockRestore() // use original implementation
 
 /**
  * Creates a role
@@ -159,7 +159,7 @@ function createRole (client, options = {}, guild) {
 }
 
 mockClass(User)
-User.prototype.toString.mockReset()
+User.prototype.toString.mockRestore()
 
 /**
  * Creates a mock user
@@ -175,7 +175,7 @@ function createUser (client, options = {}) {
 mockClass(GuildMember)
 mockClass(GuildMemberRoleManager)
 
-GuildMember.prototype.toString.mockReset()
+GuildMember.prototype.toString.mockRestore()
 
 /**
  * Creates a mock guild member
