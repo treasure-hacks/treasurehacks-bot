@@ -23,6 +23,7 @@ detaMock.Base.get.mockReturnValue({ inviteRoles: [] })
 const permissions = PermissionFlagsBits.ViewChannel
 const role = discordMock.createRole(client, { name: 'ten', id: '10', permissions }, guild)
 const badRole = discordMock.createRole(client, { name: 'twelvebot', id: '12', permissions, managed: true }, guild)
+badRole.toJSON.mockRestore()
 guild.roles.cache.set(role.id, role)
 guild.roles.cache.set(badRole.id, badRole)
 
@@ -102,7 +103,6 @@ describe('Inviteroles add command', () => {
       }],
       ephemeral: true
     }
-    badRole.toJSON.mockReset()
     await addInviteRule(this.interaction, client, false)
     expect(this.interaction.reply).toBeCalledWith(expectedReply)
   })
@@ -227,7 +227,6 @@ describe('Inviteroles details command', () => {
       }],
       ephemeral: false
     }
-    badRole.toJSON.mockReset()
     await listInviteRoles(this.interaction, client, false)
     expect(this.interaction.reply).toBeCalledWith(expectedReply)
   })

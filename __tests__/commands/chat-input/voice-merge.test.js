@@ -25,6 +25,7 @@ const members = [
   discordMock.createMember(client, { user: users[0], roles: [] }, guild),
   discordMock.createMember(client, { user: users[1], roles: [] }, guild)
 ]
+users.forEach(u => client.users.cache.set(u.id, u))
 
 const category = discordMock.createChannel(client, guild, { id: '1', name: 'CAT!', type: ChannelType.GuildCategory })
 const channel = discordMock.createChannel(client, guild, { id: '2', name: 'TEXT!', type: ChannelType.GuildText })
@@ -73,7 +74,8 @@ describe('Voice Merge Command', () => {
   })
 
   it('Sends a message that people will be moved', async () => {
-    await mergePeople(this.interaction, client, 0)
+    const interaction = discordMock.createInteraction(client, { guild, channel: stageCh })
+    await mergePeople(interaction, client, 0)
     expect(voiceCh.send).toBeCalledWith('You are being moved to <#4>. (<@u1> <@u2>)')
   })
 
