@@ -56,7 +56,7 @@ async function scanMessage (message) {
   // Ignore messages sent by bots
   if (!message.member || message.member.user.bot) return
   const serverConfig = await serverSettingsDB.get(message.guild.id)
-  const minLength = serverConfig.cryptoScamScanner.minLength || 30
+  const minLength = serverConfig.cryptoScamScanner?.minLength || 30
   if (!checkActionable(message, serverConfig, minLength)) return
 
   const content = message.cleanContent
