@@ -36,6 +36,7 @@ async function createTranscript (interaction, client) {
     img.src = img.src.replace('?size=64', '?size=240')
   })
 
+  const htmlEscape = str => str.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const dsAttachments = [...document.querySelectorAll('discord-attachment')]
   await Promise.all(dsAttachments.map(async da => {
     const url = da.getAttribute('url')
@@ -43,6 +44,11 @@ async function createTranscript (interaction, client) {
     const name = `${md5(url)}.${ext}`
 
     da.setAttribute('url', name)
+    const srcEl = da.querySelector(`[src="${htmlEscape(url)}"]`)
+    if (srcEl) srcEl.src = name
+    const hrefEl = da.querySelector(`[href="${htmlEscape(url)}"]`)
+    if (hrefEl) hrefEl.href = name
+
     const file = await fetch(url).then(x => x.arrayBuffer()).catch(() => {})
     zip.file(name, file)
   }))
