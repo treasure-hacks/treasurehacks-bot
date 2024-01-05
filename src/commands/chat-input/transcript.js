@@ -44,10 +44,10 @@ async function createTranscript (interaction, client) {
     const name = `${md5(url)}.${ext}`
 
     da.setAttribute('url', name)
-    const srcEl = da.querySelector(`[src="${htmlEscape(url)}"]`)
-    if (srcEl) srcEl.src = name
-    const hrefEl = da.querySelector(`[href="${htmlEscape(url)}"]`)
-    if (hrefEl) hrefEl.href = name
+    da.querySelectorAll(`[src="${htmlEscape(url)}"]`)
+      .forEach(el => { el.src = name })
+    da.querySelectorAll(`[href="${htmlEscape(url)}"]`)
+      .forEach(el => { el.href = name })
 
     const file = await fetch(url).then(x => x.arrayBuffer()).catch(() => {})
     zip.file(name, file)
