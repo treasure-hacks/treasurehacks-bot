@@ -10,7 +10,10 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildInvites,
     GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.AutoModerationExecution,
+    GatewayIntentBits.AutoModerationConfiguration,
+    GatewayIntentBits.GuildModeration
   ]
 }) // Connect to our discord bot
 let commands = new Collection() // Where the bot (slash) commands will be stored
