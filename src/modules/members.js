@@ -22,8 +22,9 @@ async function searchByID (guild, id) {
   const response = await rest.post(`/guilds/${guild.id}/members-search`, {
     body: { and_query: userIDQuery, limit: 1 }
   })
+  console.log(response, guild.id, id)
   const result = response.members[0]
-  result.member = new GuildMember(client, result.member, guild)
+  if (result) result.member = new GuildMember(client, result.member, guild)
   return result
 }
 

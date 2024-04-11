@@ -7,8 +7,11 @@ const serverSettingsDB = deta.Base('server-settings')
 const { client } = require('../modules/bot-setup')
 const { sendMessage } = require('../modules/message')
 const { getStats } = require('../modules/role-stats')
+const { searchByID } = require('../modules/members')
 
 // Track Invites
+
+/*
 const invites = new Collection()
 
 async function loadInvites () {
@@ -46,19 +49,32 @@ client.on(Events.GuildDelete, (guild) => {
   invites.delete(guild.id)
 })
 
+*/
+
 /**
  * Adds invite roles to a new server member
  * @param {GuildMember} member The member to add invite roles to
  */
 async function addInviteRolesToNewMember (member) {
-  const newInvites = await member.guild.invites.fetch()
-  // This is the *existing* invites for the guild.
-  const oldInvites = invites.get(member.guild.id)
-  // Look through the invites, find the one for which the uses went up.
-  const invite = newInvites.find(i => i.uses > oldInvites.get(i.code))
-  updateGuildInvites(member.guild)
+  // const newInvites = await member.guild.invites.fetch()
+  // // This is the *existing* invites for the guild.
+  // const oldInvites = invites.get(member.guild.id)
+  // // Look through the invites, find the one for which the uses went up.
+  // const invite = newInvites.find(i => i.uses > oldInvites.get(i.code))
+  // updateGuildInvites(member.guild)
+  let source
+  for (let i = 0; i < 3; i++) {
+    const result = await searchByID(member.guild, member.id)
+    source = result?.source_invite_code
+    console.log(i, !!source)
+    if (result) break
+    await new Promise(resolve => setTimeout(resolve, 2000)) // give it time
+  }
 
-  if (!invite) {
+  const invite = await member.guild.invites.fetch(source)
+
+  // test
+  if (!source || !invite) {
     // We don't know which invite someone used
     return console.warn('Unknown invite for user: ' + member.user?.tag)
   }
@@ -112,5 +128,5 @@ async function addInviteRolesToNewMember (member) {
   if (actions.length > 0) sendMessage(logChannel, { embeds })
 }
 
-client.once(Events.ClientReady, loadInvites)
 client.on(Events.GuildMemberAdd, addInviteRolesToNewMember)
+client.on(Events.GuildMemberAvailable, m => console.log('member available'))
