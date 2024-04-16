@@ -1,9 +1,10 @@
 // eslint-disable-next-line no-unused-vars
-const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
+const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits, AttachmentBuilder } = require('discord.js')
 const discordTranscripts = require('discord-html-transcripts')
 const { JSDOM } = require('jsdom')
 const md5 = str => require('crypto').createHash('md5').update(str).digest('hex')
 const JSZip = require('jszip')
+const chunks = require('buffer-chunks')
 
 /**
  * Handles the slash command interaction
@@ -70,13 +71,27 @@ async function createTranscript (interaction, client) {
   zip.file(`transcript__${interaction.channel.name}.html`, document.documentElement.outerHTML)
   zip.file('info.json', JSON.stringify(info))
   const dl = await zip.generateAsync({ type: 'nodebuffer' })
-  transcript.attachment = dl
-  transcript.name = transcript.name.replace('.html', '.zip')
+  const zipChunks = chunks(dl, 25 * 1024 ** 2) // 25 MB
 
-  interaction.channel.send({
-    content: 'Your transcript is ready to download',
-    files: [transcript]
-  })
+  const dlName = transcript.name.replace('.html', '.zip')
+  if (zipChunks.length === 1) {
+    transcript.attachment = dl
+    transcript.name = dlName
+
+    interaction.channel.send({
+      content: 'Your transcript is ready to download',
+      files: [transcript]
+    })
+  } else {
+    const files = zipChunks.map((buffer, i) => {
+      const name = `${dlName}_part${i + 1}.dat`
+      return new AttachmentBuilder(buffer, { name })
+    })
+    const content = 'Your transcript is ready to download. Once downloaded, you will need ' +
+    'to combine these files by running the following command in the same directory as the ' +
+    'downloaded files:\n```bash\n' + `cat ${dlName}_part*.dat > ${dlName}` + '\n```'
+    interaction.channel.send({ content, files })
+  }
 }
 
 module.exports = {
