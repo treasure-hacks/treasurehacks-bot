@@ -32,21 +32,6 @@ async function takeAction (alertsChannel, member) {
   member.timeout(TIMEOUT_HOURS * 3600 * 1000, 'Timeout due to repeated automod trigger')
 }
 
-function checkActionable (member, content, serverConfig, minLength) {
-  if (!serverConfig.cryptoScamScanner?.enabled) return false
-
-  const joinedDays = (new Date() - member.joinedAt) / 1000 / 3600 / 24
-  if (content != null && content.length < minLength) return false
-  if (joinedDays > serverConfig.cryptoScamScanner.maxDays) return false
-
-  const ignoredRoles = serverConfig.cryptoScamScanner?.ignoredRoles || []
-  const actionableUser = !ignoredRoles.some(id => {
-    return member.roles.cache.map(r => r.id).includes(id)
-  })
-
-  return actionableUser
-}
-
 /**
  * Scans the chat message for harmful or malicious links
  * @param {AutoModerationActionExecution} data The chat message
@@ -59,8 +44,6 @@ async function scanMessage (data) {
   // Ignore messages sent by bots
   if (!member || member.user.bot) return
   const serverConfig = await serverSettingsDB.get(data.guild.id)
-  const minLength = serverConfig.cryptoScamScanner?.minLength || 30
-  if (!checkActionable(member, data.content, serverConfig, minLength)) return
 
   const channels = await data.guild.channels.fetch()
   const alertsChannel = channels.get(serverConfig.alertsChannel)
