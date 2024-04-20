@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const { Events, AutoModerationActionExecution, AutoModerationActionType, GuildChannel, GuildMember } = require('discord.js')
+const { Events, AutoModerationActionExecution, AutoModerationActionType, GuildChannel, GuildMember, Message } = require('discord.js')
 const { Deta } = require('deta')
 const deta = Deta(process.env.DETA_PROJECT_KEY)
 const serverSettingsDB = deta.Base('server-settings')
@@ -44,6 +44,7 @@ async function scanMessage (data) {
   // Ignore messages sent by bots
   if (!member || member.user.bot) return
   const serverConfig = await serverSettingsDB.get(data.guild.id)
+  if (!serverConfig?.automodStrike?.enabled) return
 
   const channels = await data.guild.channels.fetch()
   const alertsChannel = channels.get(serverConfig.alertsChannel)
@@ -57,11 +58,16 @@ async function scanMessage (data) {
   // Mark it temporarily so we can catch repeated instances
   // of the same message in a short amount of time
   recentExecutions[contentID] = 1
-  setTimeout(() => { delete recentExecutions[contentID] }, MEMORY_MESSAGE_TTL * 1000)
+  /** @type {Message} */
+  let message = null
+  setTimeout(() => {
+    delete recentExecutions[contentID]
+    if (message) message.delete().catch(() => {})
+  }, MEMORY_MESSAGE_TTL * 1000)
 
   const rule = await data.guild.autoModerationRules.fetch(data.ruleId)
 
-  await alertsChannel.send({
+  message = await alertsChannel.send({
     author: { name: member.displayName, icon_url: member.displayAvatarURL() },
     content: `[BETA] Automod rule first triggered: ${rule.name}`
   })
