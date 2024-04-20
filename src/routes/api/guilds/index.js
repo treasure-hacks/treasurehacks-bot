@@ -5,6 +5,7 @@ const router = express.Router()
 const Joi = require('joi')
 
 const { validateAPIKey } = require('../../../modules/api-key-validation')
+const { searchByID, searchByRecent } = require('../../../modules/members')
 
 router.get('/:guild/user-ids', validateAPIKey, async (req, res) => {
   if (req.query.users == null || !/^([^#]+#\d{4}(,|$))*/.test(req.query.users)) {
@@ -88,6 +89,13 @@ router.get('/:guild/announcements-for', validateAPIKey, async (req, res) => {
     }))
 
   res.send(result)
+})
+
+router.get('/member-test', async (req, res) => {
+  const guild = await client.guilds.fetch('957408720088891473')
+  const member = (await searchByID(guild, '437808476106784770')) ?? null
+  const recent = await searchByRecent(guild, 3)
+  res.send({ member, recent })
 })
 
 module.exports = router

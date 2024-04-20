@@ -63,7 +63,7 @@ async function addInviteRolesToNewMember (member) {
   // const invite = newInvites.find(i => i.uses > oldInvites.get(i.code))
   // updateGuildInvites(member.guild)
   let source
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     const result = await searchByID(member.guild, member.id)
     source = result?.source_invite_code
     console.log(i, !!source)
@@ -130,3 +130,5 @@ async function addInviteRolesToNewMember (member) {
 
 client.on(Events.GuildMemberAdd, addInviteRolesToNewMember)
 client.on(Events.GuildMemberAvailable, m => console.log('member available'))
+client.on(Events.GuildMemberUpdate, m => console.log('member updated', m.displayName))
+client.addListener(Events.Raw, m => console.log('EVENT:', m.t))

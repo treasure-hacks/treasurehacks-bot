@@ -20,7 +20,7 @@ async function searchByID (guild, id) {
   const userIDQuery = { user_id: { or_query: [id] } }
   const rest = new REST({ version: '10' }).setToken(client.token)
   const response = await rest.post(`/guilds/${guild.id}/members-search`, {
-    body: { and_query: userIDQuery, limit: 1 }
+    body: { and_query: userIDQuery, limit: 1, sort: 1 }
   })
   console.log(response, guild.id, id)
   const result = response.members[0]
@@ -28,4 +28,23 @@ async function searchByID (guild, id) {
   return result
 }
 
-module.exports = { searchByID }
+/**
+ * Returns a search result with invite information
+ * @param {Guild} guild The guild to search
+ * @returns {Promise<GuildMemberIDSearchResult>}
+ */
+async function searchByRecent (guild) {
+  const range = { gte: Date.now() - 3600000 }
+  const rest = new REST({ version: '10' }).setToken(client.token)
+  const response = await rest.post(`/guilds/${guild.id}/members-search`, {
+    body: { and_query: { guild_joined_at: { range } }, limit: 5, sort: 1 }
+  })
+  console.log(response, guild.id)
+  const results = response.members
+  if (results) {
+    results.forEach(m => { m.member = new GuildMember(client, m.member, guild) })
+  }
+  return results
+}
+
+module.exports = { searchByID, searchByRecent }
