@@ -1,19 +1,17 @@
 const {
   PermissionOverwrites, PermissionsBitField, RoleManager, PermissionFlagsBits,
   BaseGuildTextChannel, TextChannel, VoiceChannel, StageChannel, ForumChannel,
-  DirectoryChannel, CategoryChannel, PartialTextBasedChannel, BaseGuildVoiceChannel,
+  DirectoryChannel, CategoryChannel, BaseGuildVoiceChannel,
   GuildMemberManager, GuildChannelManager, BaseGuild, InteractionType, CommandInteraction,
   ModalSubmitInteraction, MessageComponentInteraction, ChatInputCommandInteraction,
   ApplicationCommandType, UserContextMenuCommandInteraction, MessageContextMenuCommandInteraction,
-  Message, CommandInteractionOptionResolver, Invite, GuildInviteManager,
+  CommandInteractionOptionResolver, Invite, GuildInviteManager,
   InteractionResponse
 } = require("discord.js")
 const { ChannelType, Client, Guild, BaseInteraction, User,
   GuildChannel, ClientUser, Role, GuildMember, GuildMemberRoleManager,
   PermissionOverwriteManager
 } = require("discord.js")
-// const InteractionResponses = require("discord.js/src/structures/interfaces/InteractionResponses")
-
 
 function resolveTo (value) {
   return new Promise(resolve => resolve(value))
