@@ -78,7 +78,7 @@ describe('Attendance Record Command', () => {
     guild.voiceStates.cache.set('1', createVoiceState(channel))
     await recordAttendance(interaction, client)
     expect(guild.fetch).toBeCalled()
-    expect(detaMock.Base.put).toBeCalledWith(expectedConfig)
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith(expectedConfig)
   })
 })
 
@@ -95,7 +95,7 @@ describe('Attendance List Command', () => {
 
     const config = createDefaultSettings(guild)
     config.attendance = {} // Exists, but no events
-    detaMock.Base.get.mockReturnValue(config)
+    detaMock.serverSettingsDB.get.mockReturnValue(config)
 
     await listAttendance(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith(expectedReply)
@@ -104,14 +104,14 @@ describe('Attendance List Command', () => {
   it('Replies with the correct counts when events exist', async () => {
     const config = createDefaultSettings(guild)
     config.attendance = { [today + ' \u2013 name']: ['user-id', 'u2'], 'Bad name': [] }
-    detaMock.Base.get.mockReturnValue(config)
+    detaMock.serverSettingsDB.get.mockReturnValue(config)
     const expectedReply = { content: `__**${today} \u2013 name:**__ 2\n__**Bad name:**__ 0` }
 
     await listAttendance(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith(expectedReply)
 
     config.attendance = { 'Empty Only': [] }
-    detaMock.Base.get.mockReturnValue(config)
+    detaMock.serverSettingsDB.get.mockReturnValue(config)
     const expected2 = { content: '__**Empty Only:**__ 0' }
 
     await listAttendance(this.interaction, client)

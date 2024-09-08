@@ -27,8 +27,8 @@ describe('Request Channel Command', () => {
   })
   beforeEach(() => {
     this.interaction = discordMock.createInteraction(client, { guild, member })
-    detaMock.Base.get.mockClear()
-    detaMock.Base.get.mockReturnValue({
+    detaMock.serverSettingsDB.get.mockClear()
+    detaMock.serverSettingsDB.get.mockReturnValue({
       alertsChannel: channel.id,
       channelRequest: { enabled: true }
     })
@@ -40,12 +40,12 @@ describe('Request Channel Command', () => {
   })
 
   afterEach(() => {
-    detaMock.Base.get.mockReset()
+    detaMock.serverSettingsDB.get.mockReset()
     this.interaction.reply.mockClear()
   })
 
   it('Replies with an error if channel requests are disabled', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ channelRequest: { enabled: false } })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ channelRequest: { enabled: false } })
     await makeChannelRequest(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith({
       content: 'Unable to send request because requests have not been enabled',
@@ -54,7 +54,7 @@ describe('Request Channel Command', () => {
   })
 
   it('Replies with an error if there is no alerts channel', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ channelRequest: { enabled: true } }) // no alertsChannel
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ channelRequest: { enabled: true } }) // no alertsChannel
     await makeChannelRequest(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith({
       content: 'Unable to send request due to bad host configuration',

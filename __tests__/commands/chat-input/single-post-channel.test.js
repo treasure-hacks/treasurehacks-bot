@@ -22,11 +22,11 @@ describe('Single Post Channel Add Command', () => {
   })
   beforeEach(() => {
     this.interaction.reply.mockClear()
-    detaMock.Base.get.mockReturnValue({})
+    detaMock.serverSettingsDB.get.mockReturnValue({})
   })
 
   it('Replies with an error if the channel is already a single-post channel', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ singlePostChannels: [channel.id] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ singlePostChannels: [channel.id] })
     const expectedReply = { content: 'Channel is already a single-post channel', ephemeral: true }
     await setSPChannel(this.interaction, client, true)
     expect(this.interaction.reply).toBeCalledWith(expectedReply)
@@ -41,7 +41,7 @@ describe('Single Post Channel Add Command', () => {
   it('Updates the DB with the newly added single-post channel ID', async () => {
     const expectedDB = { singlePostChannels: ['2'] }
     await setSPChannel(this.interaction, client, true)
-    expect(detaMock.Base.put).toBeCalledWith(expectedDB)
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith(expectedDB)
   })
 
   it('Emits an event that Single Post Channels were updated', async () => {
@@ -56,7 +56,7 @@ describe('Single Post Channel Remove Command', () => {
   })
   beforeEach(() => {
     this.interaction.reply.mockClear()
-    detaMock.Base.get.mockReturnValue({})
+    detaMock.serverSettingsDB.get.mockReturnValue({})
   })
 
   it('Replies with an error if the channel is not a single-post channel', async () => {
@@ -66,21 +66,21 @@ describe('Single Post Channel Remove Command', () => {
   })
 
   it('Replies that the current channel is no longer a single-post channel', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ singlePostChannels: [channel.id] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ singlePostChannels: [channel.id] })
     const expectedReply = { content: '<#2> is no longer a single-post channel', ephemeral: true }
     await setSPChannel(this.interaction, client, false)
     expect(this.interaction.reply).toBeCalledWith(expectedReply)
   })
 
   it('Updates the DB with the newly removed single-post channel ID', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ singlePostChannels: [channel.id, '3'] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ singlePostChannels: [channel.id, '3'] })
     const expectedDB = { singlePostChannels: ['3'] }
     await setSPChannel(this.interaction, client, false)
-    expect(detaMock.Base.put).toBeCalledWith(expectedDB)
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith(expectedDB)
   })
 
   it('Emits an event that Single Post Channels were updated', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ singlePostChannels: [channel.id, '3'] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ singlePostChannels: [channel.id, '3'] })
     await setSPChannel(this.interaction, client, false)
     expect(client.emit).toBeCalledWith('*UpdateSinglePostChannels', 'g1', ['3'])
   })
@@ -92,11 +92,11 @@ describe('Single Post Channel Status Command', () => {
   })
   beforeEach(() => {
     this.interaction.reply.mockClear()
-    detaMock.Base.get.mockReturnValue({})
+    detaMock.serverSettingsDB.get.mockReturnValue({})
   })
 
   it('Replies that the channel is single-post when it is marked', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ singlePostChannels: [channel.id] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ singlePostChannels: [channel.id] })
     const expectedReply = { content: '<#2> currently is a single-post channel', ephemeral: true }
     await getSPCStatus(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith(expectedReply)
@@ -116,11 +116,11 @@ describe('Single Post Channel Grant Permissions Command', () => {
   })
   beforeEach(() => {
     this.interaction.reply.mockClear()
-    detaMock.Base.get.mockReturnValue({ singlePostChannels: [channel.id] })
+    detaMock.serverSettingsDB.get.mockReturnValue({ singlePostChannels: [channel.id] })
   })
 
   it('Replies with an error if the channel is not a single-post channel', async () => {
-    detaMock.Base.get.mockReturnValueOnce({})
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({})
     const expectedReply = { content: 'Channel is not a single-post channel', ephemeral: true }
     await grantSendPermission(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith(expectedReply)

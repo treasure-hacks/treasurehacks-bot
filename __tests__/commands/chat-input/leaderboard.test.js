@@ -26,11 +26,11 @@ function testNonExistent (thisArg, fn) {
       content: 'No such leaderboard with name leaderboard exists',
       ephemeral: true
     }
-    detaMock.Base.get.mockReturnValue({})
+    detaMock.serverSettingsDB.get.mockReturnValue({})
     await fn(thisArg.interaction, client)
     expect(thisArg.interaction.reply).toBeCalledWith(expectedReply)
 
-    detaMock.Base.get.mockReturnValueOnce({ leaderboards: { blah: {} } })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ leaderboards: { blah: {} } })
     await fn(thisArg.interaction, client)
     expect(thisArg.interaction.reply).toBeCalledWith(expectedReply)
   }
@@ -42,9 +42,9 @@ describe('Leaderboard Create Command', () => {
     channel.send.mockReturnValue({ id: '1' })
   })
   beforeEach(() => {
-    detaMock.Base.get.mockClear()
-    detaMock.Base.put.mockReset()
-    detaMock.Base.get.mockReturnValue({})
+    detaMock.serverSettingsDB.get.mockClear()
+    detaMock.serverSettingsDB.put.mockReset()
+    detaMock.serverSettingsDB.get.mockReturnValue({})
     this.interaction.options.getString
       .mockReturnValueOnce('leaderboard') // Name
       .mockReturnValueOnce('Leaderboard') // Title
@@ -53,7 +53,7 @@ describe('Leaderboard Create Command', () => {
   })
 
   afterAll(() => {
-    detaMock.Base.get.mockReset()
+    detaMock.serverSettingsDB.get.mockReset()
     this.interaction.options.getSubcommand.mockClear()
     channel.send.mockClear()
   })
@@ -62,7 +62,7 @@ describe('Leaderboard Create Command', () => {
   })
 
   it('Replies with an error if a leaderboard with that name already exists', async () => {
-    detaMock.Base.get.mockReturnValueOnce({
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({
       leaderboards: { leaderboard: { title: 'test' } }
     })
     await createLeaderboard(this.interaction, client)
@@ -98,7 +98,7 @@ describe('Leaderboard Create Command', () => {
     }
     this.interaction.options.getChannel.mockReturnValueOnce(undefined)
     await createLeaderboard(this.interaction, client)
-    expect(detaMock.Base.put).toBeCalledWith(expectedDB)
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith(expectedDB)
   })
 
   it('Sends a message to the target channel if specified', async () => {
@@ -130,7 +130,7 @@ describe('Leaderboard Create Command', () => {
       scores: {}
     }
     await createLeaderboard(this.interaction, client)
-    expect(detaMock.Base.put).toBeCalledWith(expectedDB)
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith(expectedDB)
   })
 })
 
@@ -140,14 +140,14 @@ describe('Leaderboard Delete Command', () => {
     channel.send.mockReturnValue({ id: '1' })
   })
   beforeEach(() => {
-    detaMock.Base.get.mockClear()
-    detaMock.Base.put.mockReset()
-    detaMock.Base.get.mockReturnValue({})
+    detaMock.serverSettingsDB.get.mockClear()
+    detaMock.serverSettingsDB.put.mockReset()
+    detaMock.serverSettingsDB.get.mockReturnValue({})
     this.interaction.options.getString.mockReturnValue('leaderboard')
   })
 
   afterAll(() => {
-    detaMock.Base.get.mockReset()
+    detaMock.serverSettingsDB.get.mockReset()
     this.interaction.options.getSubcommand.mockClear()
     channel.send.mockClear()
   })
@@ -163,7 +163,7 @@ describe('Leaderboard Delete Command', () => {
       title: 'Leaderboard',
       type: 'user'
     }
-    detaMock.Base.get.mockReturnValueOnce({ leaderboards: { leaderboard } })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ leaderboards: { leaderboard } })
     const expectedReply = {
       embeds: [{
         title: 'Leaderboard Deleted: Leaderboard',
@@ -184,10 +184,10 @@ describe('Leaderboard Delete Command', () => {
       title: 'Leaderboard',
       type: 'user'
     }
-    detaMock.Base.get.mockReturnValueOnce({ leaderboards: { leaderboard } })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ leaderboards: { leaderboard } })
     await deleteLeaderboard(this.interaction, client)
     const expectedDB = { leaderboards: {} }
-    expect(detaMock.Base.put).toBeCalledWith(expectedDB)
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith(expectedDB)
   })
 
   it('Deletes the existing leaderboard post, if it exists', async () => {
@@ -203,7 +203,7 @@ describe('Leaderboard Delete Command', () => {
       channelID: '2',
       messageID: '1'
     }
-    detaMock.Base.get.mockReturnValueOnce({ leaderboards: { leaderboard } })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ leaderboards: { leaderboard } })
 
     await deleteLeaderboard(this.interaction, client)
     expect(delFn).toBeCalled()
@@ -229,14 +229,14 @@ describe('Leaderboard Repost Command', () => {
     }
   })
   beforeEach(() => {
-    detaMock.Base.get.mockClear()
-    detaMock.Base.put.mockReset()
-    detaMock.Base.get.mockReturnValue({ leaderboards: { leaderboard: this.leaderboard } })
+    detaMock.serverSettingsDB.get.mockClear()
+    detaMock.serverSettingsDB.put.mockReset()
+    detaMock.serverSettingsDB.get.mockReturnValue({ leaderboards: { leaderboard: this.leaderboard } })
     this.interaction.options.getString.mockReturnValue('leaderboard')
   })
 
   afterAll(() => {
-    detaMock.Base.get.mockReset()
+    detaMock.serverSettingsDB.get.mockReset()
     this.interaction.options.getSubcommand.mockClear()
     channel.send.mockClear()
   })
@@ -290,7 +290,7 @@ describe('Leaderboard Repost Command', () => {
       scores: {}
     }
     await repostLeaderboard(this.interaction, client)
-    expect(detaMock.Base.put).toBeCalledWith(expectedDB)
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith(expectedDB)
   })
 })
 
@@ -306,14 +306,14 @@ describe('Leaderboard Reset Command', () => {
     }
   })
   beforeEach(() => {
-    detaMock.Base.get.mockClear()
-    detaMock.Base.put.mockReset()
-    detaMock.Base.get.mockReturnValue({ leaderboards: { leaderboard: this.leaderboard } })
+    detaMock.serverSettingsDB.get.mockClear()
+    detaMock.serverSettingsDB.put.mockReset()
+    detaMock.serverSettingsDB.get.mockReturnValue({ leaderboards: { leaderboard: this.leaderboard } })
     this.interaction.options.getString.mockReturnValue('leaderboard')
   })
 
   afterAll(() => {
-    detaMock.Base.get.mockReset()
+    detaMock.serverSettingsDB.get.mockReset()
     this.interaction.options.getSubcommand.mockReset()
     channel.send.mockClear()
   })
@@ -379,7 +379,7 @@ describe('Leaderboard Reset Command', () => {
       scores: {}
     }
     await resetLeaderboard(this.interaction, client)
-    expect(detaMock.Base.put).toBeCalledWith(expectedDB)
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith(expectedDB)
   })
 })
 
@@ -400,15 +400,15 @@ describe('Leaderboard Update Command (Post Leaderboards)', () => {
     }
   })
   beforeEach(() => {
-    detaMock.Base.get.mockClear()
-    detaMock.Base.put.mockReset()
-    detaMock.Base.get.mockReturnValue({ leaderboards: { leaderboard: this.leaderboard } })
+    detaMock.serverSettingsDB.get.mockClear()
+    detaMock.serverSettingsDB.put.mockReset()
+    detaMock.serverSettingsDB.get.mockReturnValue({ leaderboards: { leaderboard: this.leaderboard } })
     this.interaction.options.getString.mockReturnValueOnce('leaderboard') // name
     this.leaderboard.scores = {}
   })
 
   afterAll(() => {
-    detaMock.Base.get.mockReset()
+    detaMock.serverSettingsDB.get.mockReset()
     this.interaction.options.getSubcommand.mockClear()
     channel.send.mockClear()
   })
@@ -491,6 +491,6 @@ describe('Leaderboard Update Command (Post Leaderboards)', () => {
     }
 
     await updatePostsLeaderboard(this.interaction, client)
-    expect(detaMock.Base.put).toBeCalledWith(expectedDB)
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith(expectedDB)
   })
 })
