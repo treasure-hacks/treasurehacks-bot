@@ -22,12 +22,12 @@ describe('Points Command', () => {
     this.interaction.options.getChannel.mockReturnValue(channel)
   })
   beforeEach(() => {
-    detaMock.Base.get.mockClear()
-    detaMock.Base.get.mockReturnValue({})
+    detaMock.serverSettingsDB.get.mockClear()
+    detaMock.serverSettingsDB.get.mockReturnValue({})
   })
 
   afterEach(() => {
-    detaMock.Base.get.mockReset()
+    detaMock.serverSettingsDB.get.mockReset()
     this.interaction.reply.mockClear()
   })
 
@@ -50,7 +50,7 @@ describe('Points Command', () => {
   })
 
   it('Returns the correct amount of points for each task', async () => {
-    detaMock.Base.get.mockReturnValue({
+    detaMock.serverSettingsDB.get.mockReturnValue({
       messageCounter: { counts: { u1: 1 } },
       attendance: { event: ['u2'] }, // a different user
       leaderboards: { weekly: { scores: { u1: [] } } } // zero
@@ -71,7 +71,7 @@ describe('Points Command', () => {
     await respondWithPoints(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith(expectedReply)
 
-    detaMock.Base.get.mockReturnValue({
+    detaMock.serverSettingsDB.get.mockReturnValue({
       messageCounter: { counts: { u1: 3 } },
       attendance: { event: ['u1'] },
       leaderboards: { weekly: { scores: { u1: [{}, {}] } } } // 2 posts of some sort

@@ -18,7 +18,7 @@ guild.invites.fetch.mockImplementation(async () => guild.invites.cache)
 const invite = discordMock.createInvite(client, { channel, guild, code: 'INV', id: '11' }, guild)
 guild.invites.cache.set(invite.id, invite)
 
-detaMock.Base.get.mockReturnValue({ inviteRoles: [] })
+detaMock.serverSettingsDB.get.mockReturnValue({ inviteRoles: [] })
 
 const permissions = PermissionFlagsBits.ViewChannel
 const role = discordMock.createRole(client, { name: 'ten', id: '10', permissions }, guild)
@@ -108,7 +108,7 @@ describe('Inviteroles add command', () => {
   })
 
   it('Replies with an error if the rule already exists', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ inviteRoles: [{ name: 'tens' }] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ inviteRoles: [{ name: 'tens' }] })
     const expectedReply = {
       embeds: [{
         color: 0xff0000,
@@ -159,7 +159,7 @@ describe('Inviteroles add command', () => {
       updated_at: 1234
     }
     await addInviteRule(this.interaction, client, false)
-    expect(detaMock.Base.put).toBeCalledWith({ inviteRoles: [expectedConfig] })
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith({ inviteRoles: [expectedConfig] })
   })
 })
 
@@ -188,7 +188,7 @@ describe('Inviteroles details command', () => {
     expect(this.interaction.reply).toBeCalledWith(expectedNoMatchReply)
     this.interaction.reply.mockClear()
 
-    detaMock.Base.get.mockReturnValueOnce({ inviteRoles: [] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ inviteRoles: [] })
     delete this.options.name
     const expectedNoRulesReply = {
       content: 'Details of all role assignments:',
@@ -203,7 +203,7 @@ describe('Inviteroles details command', () => {
   })
 
   it('Replies with all invite role assignment rules if no name is specified', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ inviteRoles: [] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ inviteRoles: [] })
     this.options = {
       name: 'tens',
       rename: 'ten-people',
@@ -252,7 +252,7 @@ describe('Inviteroles delete command', () => {
   })
 
   it('Replies with an error if that invite role assignment does not exist', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ inviteRoles: [] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ inviteRoles: [] })
     const expectedNoMatchReply = {
       embeds: [{
         color: 0xff0000,
@@ -267,7 +267,7 @@ describe('Inviteroles delete command', () => {
   })
 
   it('Replies with the rule that was deleted', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ inviteRoles: [this.rule] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ inviteRoles: [this.rule] })
     const expectedNoMatchReply = {
       embeds: [{
         title: 'Deleted `tens`',
@@ -284,9 +284,9 @@ describe('Inviteroles delete command', () => {
   })
 
   it('Removees the role assigment rule from the database', async () => {
-    detaMock.Base.get.mockReturnValueOnce({ inviteRoles: [this.rule] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ inviteRoles: [this.rule] })
     await removeInviteRule(this.interaction, client)
-    expect(detaMock.Base.put).toBeCalledWith({ inviteRoles: [] })
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith({ inviteRoles: [] })
   })
 })
 
@@ -318,7 +318,7 @@ describe('Inviteroles update command', () => {
       invites: invite.code
     }
     this.interaction.reply.mockClear()
-    detaMock.Base.put.mockClear()
+    detaMock.serverSettingsDB.put.mockClear()
   })
 
   it('Replies with an error if the rule name is invalid', async () => {
@@ -419,7 +419,7 @@ describe('Inviteroles update command', () => {
 
   it('Updates the invite role assignment rule in the database', async () => {
     this.options['remove-roles'] = 'None'
-    detaMock.Base.get.mockReturnValueOnce({ inviteRoles: [this.rule] })
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({ inviteRoles: [this.rule] })
     const expectedConfig = {
       name: 'ten-people',
       invites: ['INV'],
@@ -432,6 +432,6 @@ describe('Inviteroles update command', () => {
     }
     this.interaction.reply.mockImplementation(x => console.log(x))
     await addInviteRule(this.interaction, client, true)
-    expect(detaMock.Base.put).toBeCalledWith({ inviteRoles: [expectedConfig] })
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith({ inviteRoles: [expectedConfig] })
   })
 })
