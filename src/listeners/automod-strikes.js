@@ -1,8 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 const { Events, AutoModerationActionExecution, AutoModerationActionType, GuildChannel, GuildMember, Message } = require('discord.js')
-const { Deta } = require('deta')
-const deta = Deta(process.env.DETA_PROJECT_KEY)
-const serverSettingsDB = deta.Base('server-settings')
+const { serverSettingsDB } = require('../modules/database')
 
 const { client } = require('../modules/bot-setup')
 const { searchByID } = require('../modules/members')

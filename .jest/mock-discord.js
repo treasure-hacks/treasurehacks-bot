@@ -1,8 +1,18 @@
-const { PermissionOverwrites, PermissionsBitField, RoleManager, PermissionFlagsBits, BaseGuildTextChannel, TextChannel, VoiceChannel, StageChannel, ForumChannel, DirectoryChannel, CategoryChannel, PartialTextBasedChannel, BaseGuildVoiceChannel, GuildMemberManager, GuildChannelManager, BaseGuild, InteractionType, CommandInteraction, ModalSubmitInteraction, MessageComponentInteraction, ChatInputCommandInteraction, ApplicationCommandType, UserContextMenuCommandInteraction, MessageContextMenuCommandInteraction, Message, CommandInteractionOptionResolver, Invite, GuildInviteManager } = require("discord.js")
-const { ChannelType, Client, Guild, BaseInteraction, User,
-  GuildChannel, ClientUser, Role, GuildMember, GuildMemberRoleManager, PermissionOverwriteManager
+const {
+  PermissionOverwrites, PermissionsBitField, RoleManager, PermissionFlagsBits,
+  BaseGuildTextChannel, TextChannel, VoiceChannel, StageChannel, ForumChannel,
+  DirectoryChannel, CategoryChannel, PartialTextBasedChannel, BaseGuildVoiceChannel,
+  GuildMemberManager, GuildChannelManager, BaseGuild, InteractionType, CommandInteraction,
+  ModalSubmitInteraction, MessageComponentInteraction, ChatInputCommandInteraction,
+  ApplicationCommandType, UserContextMenuCommandInteraction, MessageContextMenuCommandInteraction,
+  Message, CommandInteractionOptionResolver, Invite, GuildInviteManager,
+  InteractionResponse
 } = require("discord.js")
-const InteractionResponses = require("discord.js/src/structures/interfaces/InteractionResponses")
+const { ChannelType, Client, Guild, BaseInteraction, User,
+  GuildChannel, ClientUser, Role, GuildMember, GuildMemberRoleManager,
+  PermissionOverwriteManager
+} = require("discord.js")
+// const InteractionResponses = require("discord.js/src/structures/interfaces/InteractionResponses")
 
 
 function resolveTo (value) {
@@ -103,7 +113,7 @@ const interactionType = {
 }
 
 mockClass(CommandInteraction)
-mockClass(InteractionResponses)
+mockClass(InteractionResponse)
 mockClass(ChatInputCommandInteraction)
 mockClass(UserContextMenuCommandInteraction)
 mockClass(MessageContextMenuCommandInteraction)
@@ -126,7 +136,7 @@ function createInteraction (client, options = {}, userData = {}) {
   
   const user = new User(client, userData)
   const Class = interactionType[type]
-  const interactionData = { user, data: { ...options }, type, ...options }
+  const interactionData = { user, data: { ...options }, type, ...options, entitlements: [] }
   if (type === InteractionType.ApplicationCommand) interactionData.data.type = cmdType
   let i = new Class(client, interactionData, options.guild, options.guild?.id || options.guildId)
 

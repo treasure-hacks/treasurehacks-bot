@@ -1,9 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 const { ModalSubmitInteraction } = require('discord.js')
-const { Deta } = require('deta')
-const deta = Deta(process.env.DETA_PROJECT_KEY)
-const serverSettingsDB = deta.Base('server-settings')
-// const { getAlertsChannel, sendMessageAsync } = require('../modules/message')
+const { serverSettingsDB } = require('../modules/database')
 const { getLeaderboard, updateLeaderboardPost, getLeaderboardMessage } = require('../scripts/leaderboard')
 
 /**

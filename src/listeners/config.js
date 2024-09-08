@@ -1,8 +1,6 @@
 const { Events } = require('discord.js')
 const { client } = require('../modules/bot-setup')
-const { Deta } = require('deta')
-const deta = Deta(process.env.DETA_PROJECT_KEY)
-const serverSettingsDB = deta.Base('server-settings')
+const { serverSettingsDB } = require('../modules/database')
 
 /**
  * Returns an object containing the default bot settings for the guild
@@ -15,7 +13,7 @@ function createDefaultSettings (guild) {
     logChannel: null,
     alertsChannel: null,
     inviteRoles: [],
-    linkScanner: { enabled: true, ignoredRoles: [] },
+    linkScanner: { enabled: false, ignoredRoles: [] },
     channelRequest: { enabled: false }
   }
 }
