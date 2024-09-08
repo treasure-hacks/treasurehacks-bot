@@ -26,7 +26,7 @@ const serverSettingsDB = {
   put: async function (data) {
     const id = data.key
     delete data.key
-    await ServerSettings.findByIdAndUpdate(id, data)
+    await ServerSettings.findByIdAndUpdate(id, data, { new: true, upsert: true })
   }
 }
 
