@@ -13,6 +13,14 @@ jest.mock('deta', () => ({
   }))
 }))
 
+jest.mock('../src/modules/database', () => ({
+  serverSettingsDB: {
+    get: (...args) => mockBaseGet(...args),
+    put: (...args) => mockBasePut(...args)
+  }
+}))
+
 module.exports = {
-  Base: { get: mockBaseGet, put: mockBasePut }
+  Base: { get: mockBaseGet, put: mockBasePut },
+  serverSettingsDB: { get: mockBaseGet, put: mockBasePut }
 }

@@ -12,7 +12,7 @@ const category = discordMock.createChannel(client, guild, { id: '1', type: Chann
 const channel = discordMock.createChannel(client, guild, { id: '2', guild, name: 'main' })
 guild.channels.cache.set(category.id, category)
 guild.channels.cache.set(channel.id, channel)
-detaMock.Base.get.mockReturnValue({}) // make it completely empty
+detaMock.serverSettingsDB.get.mockReturnValue({}) // make it completely empty
 
 describe('Config Set Log Channel Command', () => {
   beforeAll(() => {
@@ -46,11 +46,11 @@ describe('Config Set Log Channel Command', () => {
     }
     await setLog(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith({ embeds: [expectedEmbed] })
-    expect(detaMock.Base.put).toBeCalledWith({ logChannel: null })
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith({ logChannel: null })
   })
 
   it('Sets the log channel if a valid channel is specified', async () => {
-    detaMock.Base.get.mockReturnValue({ inviteLogChannel: 'blah' }) // make sure it gets rid of this
+    detaMock.serverSettingsDB.get.mockReturnValue({ inviteLogChannel: 'blah' }) // make sure it gets rid of this
     const expectedEmbed = {
       title: 'Success',
       description: 'Set the log channel to <#2>',
@@ -58,7 +58,7 @@ describe('Config Set Log Channel Command', () => {
     }
     await setLog(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith({ embeds: [expectedEmbed], ephemeral: false })
-    expect(detaMock.Base.put).toBeCalledWith({ logChannel: '2' })
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith({ logChannel: '2' })
   })
 })
 
@@ -94,9 +94,9 @@ describe('Config Set Alerts Channel Command', () => {
     }
     await setAlerts(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith({ embeds: [expectedNoSetup] })
-    expect(detaMock.Base.put).toBeCalledWith({ logChannel: null })
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith({ logChannel: null })
 
-    detaMock.Base.get.mockReturnValue({ alertsChannel: 'alerts' })
+    detaMock.serverSettingsDB.get.mockReturnValue({ alertsChannel: 'alerts' })
     this.interaction.options.getChannel.mockReturnValueOnce(undefined)
     const expectedEmbed = {
       title: 'Config',
@@ -105,7 +105,7 @@ describe('Config Set Alerts Channel Command', () => {
     }
     await setAlerts(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith({ embeds: [expectedEmbed] })
-    expect(detaMock.Base.put).toBeCalledWith({ logChannel: null })
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith({ logChannel: null })
   })
 
   it('Sets the alerts channel if a valid channel is specified', async () => {
@@ -116,7 +116,7 @@ describe('Config Set Alerts Channel Command', () => {
     }
     await setAlerts(this.interaction, client)
     expect(this.interaction.reply).toBeCalledWith({ embeds: [expectedEmbed], ephemeral: false })
-    expect(detaMock.Base.put).toBeCalledWith({ alertsChannel: '2' })
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith({ alertsChannel: '2' })
   })
 })
 
@@ -127,7 +127,7 @@ describe('Get Feature Config', () => {
 
   it('Returns the correct reply object associated with a key', async () => {
     this.interaction.options.getSubcommand.mockReturnValueOnce('cool-feature')
-    detaMock.Base.get.mockReturnValueOnce({
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({
       coolFeature: { enabled: true },
       'cool-feature': { enabled: false } // it should not pick this one
     })
@@ -145,7 +145,7 @@ describe('Get Feature Config', () => {
 
   it('Returns a reply object containing proper mentions and values', async () => {
     this.interaction.options.getSubcommand.mockReturnValueOnce('feature')
-    detaMock.Base.get.mockReturnValueOnce({
+    detaMock.serverSettingsDB.get.mockReturnValueOnce({
       feature: { enabled: true, channel: 'channel', category: 'cat', foo: 'bar' }
     })
     const ftConfig = await getFeatureConfig(this.interaction, client)
@@ -173,17 +173,17 @@ describe('Update Feature Config', () => {
       get: () => discordMock.createInteraction(client, { guild, options: [this.command], resolved: [this.command] })
     })
     this.interaction.options.getSubcommand.mockReturnValue('feature')
-    detaMock.Base.get.mockReturnValue({
+    detaMock.serverSettingsDB.get.mockReturnValue({
       feature: { enabled: true, channel: 'channel', category: 'cat', foo: 'bar' }
     })
   })
   beforeEach(() => {
-    detaMock.Base.get.mockClear()
-    detaMock.Base.put.mockReset()
+    detaMock.serverSettingsDB.get.mockClear()
+    detaMock.serverSettingsDB.put.mockReset()
   })
 
   afterAll(() => {
-    detaMock.Base.get.mockReset()
+    detaMock.serverSettingsDB.get.mockReset()
     this.interaction.options.getSubcommand.mockClear()
   })
   afterEach(() => {
@@ -202,7 +202,7 @@ describe('Update Feature Config', () => {
   it('Does not update the database if no options are changed', async () => {
     this.command.options = []
     await updateFeatureConfig(this.interaction, client)
-    expect(detaMock.Base.put).not.toBeCalled()
+    expect(detaMock.serverSettingsDB.put).not.toBeCalled()
   })
 
   it('Replies with the updated config if something changes', async () => {
@@ -235,6 +235,6 @@ describe('Update Feature Config', () => {
       feature: { enabled: false, channel: 'ch2', category: 'cat', foo: 'baz' }
     }
     await updateFeatureConfig(this.interaction, client)
-    expect(detaMock.Base.put).toBeCalledWith(expectedConfig)
+    expect(detaMock.serverSettingsDB.put).toBeCalledWith(expectedConfig)
   })
 })

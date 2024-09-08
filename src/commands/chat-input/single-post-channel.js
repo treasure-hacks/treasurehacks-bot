@@ -1,8 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits, PermissionOverwriteManager } = require('discord.js')
-const { Deta } = require('deta')
-const deta = Deta(process.env.DETA_PROJECT_KEY)
-const serverSettingsDB = deta.Base('server-settings')
+const { serverSettingsDB } = require('../../modules/database')
 
 /**
  * Sets the "single-post" status of a channel

@@ -1,8 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 const { EmbedBuilder, Guild, Channel } = require('discord.js')
-const { Deta } = require('deta')
-const deta = Deta(process.env.DETA_PROJECT_KEY)
-const serverSettingsDB = deta.Base('server-settings')
+const { serverSettingsDB } = require('../modules/database')
 
 /**
  * Gets the log channel of the guild

@@ -1,8 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 const { Client, ChatInputCommandInteraction, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
-const { Deta } = require('deta')
-const deta = Deta(process.env.DETA_PROJECT_KEY)
-const serverSettingsDB = deta.Base('server-settings')
+const { serverSettingsDB } = require('../../modules/database')
 
 /**
  * Responds to the user with the number of points they have, that is, the number of messages
