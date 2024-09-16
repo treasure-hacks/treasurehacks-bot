@@ -19,6 +19,8 @@ const ServerSettings = mongoose.model('server-settings', new mongoose.Schema({
 const serverSettingsDB = {
   get: async function (serverID) {
     const response = await ServerSettings.findById(serverID).lean()
+    if (!response) return null
+
     // for auto type recognition to be correct
     const data = { ...response, key: response._id, _id: undefined }
     return data
